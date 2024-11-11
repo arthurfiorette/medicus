@@ -10,7 +10,10 @@
   },
   "license": "MIT",
   "author": "Arthur Fiorette <me@arthur.place>",
+  "sideEffects": false,
+  "type": "commonjs",
   "main": "dist/index.js",
+  "files": ["dist", "fastify.d.ts", "fastify.js", "LICENSE", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "biome format --write .",
@@ -20,13 +23,28 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@sinclair/typebox": "^0.33.22",
+    "close-with-grace": "^2.1.0",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@arthurfiorette/biomejs-config": "^1.0.5",
     "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.9.0",
     "husky": "^9.1.6",
     "typescript": "^5.6.3"
+  },
+  "peerDependencies": {
+    "fastify": "^5.1.0",
+    "fastify-plugin": "^5.0.1"
+  },
+  "peerDependenciesMeta": {
+    "fastify": {
+      "optional": true
+    },
+    "fastify-plugin": {
+      "optional": true
+    }
   },
   "packageManager": "pnpm@9.1.1",
   "engines": {

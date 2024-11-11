@@ -12,8 +12,6 @@
     "outDir": "dist",
     "stripInternal": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
