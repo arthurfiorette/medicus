@@ -63,7 +63,9 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
       fastify.medicus.addChecker({
         async pressure() {
           return {
+            //@ts-ignore - only if @fastify/under-pressure is used
             status: fastify.isUnderPressure() ? HealthStatus.DEGRADED : HealthStatus.HEALTHY,
+            //@ts-ignore - only if @fastify/under-pressure is used
             debug: fastify.memoryUsage()
           };
         }
