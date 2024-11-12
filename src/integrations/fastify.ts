@@ -22,7 +22,7 @@ export type DebugDetector = boolean | ((req: FastifyRequest) => boolean | Promis
 
 export type FastifyMedicsPluginOptions = Omit<
   MedicusOption<FastifyInstance>,
-  'manualClearBackgroundCheck' | 'context'
+  'manualClearBackgroundCheck' | 'context' | 'errorLogger'
 > & {
   /**
    * If the health check route should be hidden from the documentation
@@ -51,10 +51,15 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
     fastify.decorate(
       'medicus',
       new Medicus({
-        context: fastify,
         ...medicusOptions,
         // better to close on fastify close
-        manualClearBackgroundCheck: true
+        manualClearBackgroundCheck: true,
+        // auto inject context
+        context: fastify,
+        // logs to fastify logger
+        errorLogger: (error, checkerName) => {
+          fastify.log.error(error, `Health check failed for ${checkerName}`);
+        }
       })
     );
 

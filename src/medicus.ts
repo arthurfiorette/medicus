@@ -118,14 +118,14 @@ export class Medicus<C = void> {
         default:
           return { status: HealthStatus.HEALTHY };
       }
-    } catch (error: any) {
+    } catch (error) {
       if (this.options.errorLogger) {
         this.options.errorLogger(error, checker.name);
       }
 
       return {
         status: HealthStatus.UNHEALTHY,
-        debug: { error }
+        debug: { error: String(error) }
       };
     }
   }

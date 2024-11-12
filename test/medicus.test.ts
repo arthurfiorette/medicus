@@ -64,8 +64,6 @@ describe('Medicus', () => {
   });
 
   it('supports all kinds of returns', async () => {
-    const createdError = new Error('Promise void error');
-
     using medicus = new Medicus({
       checkers: {
         returnsEnum() {
@@ -93,7 +91,7 @@ describe('Medicus', () => {
         },
         async returnsPromiseVoid() {},
         async rejectsPromiseVoid() {
-          throw createdError;
+          throw new Error('Promise void error');
         }
       }
     });
@@ -129,7 +127,7 @@ describe('Medicus', () => {
         },
         rejectsPromiseVoid: {
           status: HealthStatus.UNHEALTHY,
-          debug: { error: createdError }
+          debug: { error: 'Error: Promise void error' }
         }
       }
     });
