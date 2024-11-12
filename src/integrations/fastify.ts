@@ -25,13 +25,6 @@ export type FastifyMedicsPluginOptions = Omit<
   'manualClearBackgroundCheck' | 'context' | 'errorLogger'
 > & {
   /**
-   * If the health check route should be hidden from the documentation
-   *
-   * @default false
-   */
-  hide?: boolean;
-
-  /**
    * The route options to be passed to fastify
    *
    * @default { url: '/health', method: 'GET', logLevel: 'silent' }
@@ -47,7 +40,7 @@ export type FastifyMedicsPluginOptions = Omit<
 };
 
 export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
-  async (fastify, { route, debug = false, hide, ...medicusOptions }) => {
+  async (fastify, { route, debug = false, ...medicusOptions }) => {
     fastify.decorate(
       'medicus',
       new Medicus({
@@ -88,7 +81,6 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
       logLevel: 'silent',
       ...route,
       schema: {
-        hide,
         tags: ['Health'],
         description: 'Performs a health check on the system',
         response: Object.fromEntries(
