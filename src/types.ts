@@ -1,8 +1,5 @@
 import type { Medicus } from './medicus';
 
-/** A simple type definition for a health check function */
-type MaybePromise<T> = T | Promise<T>;
-
 export enum HealthStatus {
   HEALTHY = 'healthy',
   DEGRADED = 'degraded',
@@ -14,11 +11,6 @@ export interface DetailedHealthCheck {
    * The status of the health check
    */
   status: HealthStatus;
-
-  /**
-   * An additional text message with more information about the health check
-   */
-  info?: string;
 
   /**
    * A list of key-value pairs with additional information about the health check
@@ -43,7 +35,15 @@ export interface HealthCheckResult {
  * A health check function that can be used to check if a part of the system is healthy
  */
 export interface HealthChecker {
-  (this: void): MaybePromise<undefined | HealthStatus | DetailedHealthCheck>;
+  (
+    this: void
+  ):
+    | void
+    | HealthStatus
+    | DetailedHealthCheck
+    | Promise<void>
+    | Promise<HealthStatus>
+    | Promise<DetailedHealthCheck>;
 
   /** The (sub)service name this checks for */
   name: string;
@@ -53,7 +53,7 @@ export interface MedicusOption {
   /**
    * List of checkers to automatically add to the medicus instance
    */
-  checkers?: HealthChecker[];
+  checkers?: Record<string, HealthChecker>;
 
   /**
    * If provided, this function will be called whenever an error occurs during the execution of a health check

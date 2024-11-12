@@ -20,7 +20,8 @@
     "lint": "biome check .",
     "lint:ci": "biome ci .",
     "lint:fix": "biome check --write --unsafe .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "c8 --reporter lcov --reporter text tsx --enable-source-maps --test test/**/*.test.ts"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.33.22",
@@ -30,8 +31,11 @@
   "devDependencies": {
     "@arthurfiorette/biomejs-config": "^1.0.5",
     "@biomejs/biome": "^1.9.4",
+    "@fastify/under-pressure": "^9.0.1",
     "@types/node": "^22.9.0",
+    "c8": "^10.1.2",
     "husky": "^9.1.6",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   },
   "peerDependencies": {

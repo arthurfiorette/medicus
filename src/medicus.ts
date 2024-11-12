@@ -11,7 +11,7 @@ import {
  * A class that can be used to perform health checks on a system
  */
 export class Medicus {
-  private checkers: Set<HealthChecker> = new Set();
+  private checkers: Map<string, HealthChecker> = new Map();
   private lastCheck: HealthCheckResult | null = null;
 
   /**
@@ -19,9 +19,9 @@ export class Medicus {
    */
   private backgroundCheckIntervalId: NodeJS.Timeout | null = null;
 
-  constructor(private readonly options: MedicusOption) {
+  constructor(private readonly options: MedicusOption = {}) {
     if (this.options.checkers) {
-      this.addChecker(...this.options.checkers);
+      this.addChecker(this.options.checkers);
     }
 
     this.#handleBackgroundCheck();
@@ -30,18 +30,29 @@ export class Medicus {
   /**
    * Adds a new checker to be executed when the health check is run
    */
-  addChecker(...checkers: HealthChecker[]): void {
-    for (const checker of checkers) {
-      this.checkers.add(checker);
+  addChecker(checkers: Record<string, HealthChecker>): void {
+    for (const name in checkers) {
+      if (this.checkers.has(name)) {
+        throw new Error(`A checker with the name "${name}" is already registered`);
+      }
+
+      this.checkers.set(name, checkers[name]!);
     }
+  }
+
+  /**
+   * Returns an read-only iterator of all the checkers
+   */
+  listCheckers(): MapIterator<HealthChecker> {
+    return this.checkers.values();
   }
 
   /**
    * Removes a checker from the list of checkers to be executed
    */
-  removeChecker(...checkers: HealthChecker[]): void {
-    for (const checker of checkers) {
-      this.checkers.delete(checker);
+  removeChecker(...checkerOrNames: (HealthChecker | string)[]): void {
+    for (const checker of checkerOrNames) {
+      this.checkers.delete(typeof checker === 'function' ? checker.name : checker);
     }
   }
 
@@ -55,7 +66,7 @@ export class Medicus {
   /**
    * Performs a health check and returns the result
    */
-  async performCheck(): Promise<HealthCheckResult> {
+  performCheck = async (): Promise<HealthCheckResult> => {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
@@ -69,19 +80,19 @@ export class Medicus {
 
     // updates the last check result
     this.lastCheck = {
-      status: status,
+      status,
       services
     };
 
     return this.lastCheck;
-  }
+  };
 
   /**
    * Returns a generator that runs all the health checks and yields the results
    */
   async *#runChecks() {
-    for (const checker of this.checkers) {
-      yield this.#executeChecker(checker).then((res) => [checker.name, res] as const);
+    for (const [name, checker] of this.checkers) {
+      yield this.#executeChecker(checker).then((res) => [name, res] as const);
     }
   }
 
@@ -109,7 +120,7 @@ export class Medicus {
 
       return {
         status: HealthStatus.UNHEALTHY,
-        debug: { error: String(error), stack: error?.stack }
+        debug: { error }
       };
     }
   }
@@ -128,7 +139,7 @@ export class Medicus {
     }
 
     this.backgroundCheckIntervalId = setInterval(
-      this.performCheck.bind(this),
+      this.performCheck,
       this.options.backgroundCheckInterval
     );
 
@@ -152,4 +163,9 @@ export class Medicus {
       this.backgroundCheckIntervalId = null;
     }
   };
+
+  /** to be used as `using medicus = new Medicus()` */
+  [Symbol.dispose]() {
+    this.closeBackgroundCheck();
+  }
 }

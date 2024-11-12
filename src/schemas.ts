@@ -7,12 +7,9 @@ export const HealthStatusSchema = Type.Enum(HealthStatus, {
 
 export const DetailedHealthCheckSchema = Type.Object(
   {
-    status: HealthStatusSchema,
-    info: Type.Optional(Type.String()),
+    status: Type.Ref(HealthStatusSchema),
     debug: Type.Optional(
-      Type.Object({
-        key: Type.Union([Type.Number(), Type.Boolean(), Type.String()])
-      })
+      Type.Record(Type.String(), Type.Union([Type.Number(), Type.Boolean(), Type.String()]))
     )
   },
   {
@@ -21,24 +18,11 @@ export const DetailedHealthCheckSchema = Type.Object(
   }
 );
 
-export const HealthCheckComplexResultSchema = Type.Object(
+export const HealthCheckResultSchema = Type.Object(
   {
-    status: HealthStatusSchema,
+    status: Type.Ref(HealthStatusSchema),
     services: Type.Record(Type.String(), Type.Ref(DetailedHealthCheckSchema))
   },
-  {
-    $id: 'MedicusHealthCheckResult',
-    additionalProperties: false
-  }
-);
-
-export const HealthCheckSimpleResultSchema = Type.Pick(HealthCheckComplexResultSchema, ['status'], {
-  $id: 'MedicusHealthCheckSimpleResult',
-  additionalProperties: false
-});
-
-export const HealthCheckResultSchema = Type.Union(
-  [HealthCheckSimpleResultSchema, HealthCheckComplexResultSchema],
   {
     $id: 'MedicusHealthCheckResult',
     additionalProperties: false
@@ -49,8 +33,7 @@ export const HealthCheckQueryParamsSchema = Type.Object(
   {
     last: Type.Optional(
       Type.Boolean({
-        description: 'If set to true, the last health check result will be returned',
-        default: false
+        description: 'If set to true, the last health check result will be returned'
       })
     )
   },
@@ -65,9 +48,7 @@ export const HealthCheckQueryParamsSchema = Type.Object(
  */
 export const AllSchemas = [
   DetailedHealthCheckSchema,
-  HealthCheckComplexResultSchema,
-  HealthCheckQueryParamsSchema,
   HealthCheckResultSchema,
-  HealthCheckSimpleResultSchema,
+  HealthCheckQueryParamsSchema,
   HealthStatusSchema
 ];

@@ -1,3 +1,6 @@
 {
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "cSpell.words": ["arthurfiorette", "biomejs", "fastify", "Fiorette", "medicus", "Medicus"]
 }
