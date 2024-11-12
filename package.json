@@ -13,7 +13,7 @@
   "sideEffects": false,
   "type": "commonjs",
   "main": "dist/index.js",
-  "files": ["dist", "fastify.d.ts", "fastify.js", "LICENSE", "README.md"],
+  "files": ["dist", "fastify.d.ts", "fastify.js", "node.d.ts", "node.js", "LICENSE", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "biome format --write .",
