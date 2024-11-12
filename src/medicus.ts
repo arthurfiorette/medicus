@@ -10,8 +10,8 @@ import {
 /**
  * A class that can be used to perform health checks on a system
  */
-export class Medicus {
-  private checkers: Map<string, HealthChecker> = new Map();
+export class Medicus<C = void> {
+  private checkers: Map<string, HealthChecker<C>> = new Map();
   private lastCheck: HealthCheckResult | null = null;
 
   /**
@@ -19,10 +19,15 @@ export class Medicus {
    */
   private backgroundCheckIntervalId: NodeJS.Timeout | null = null;
 
-  constructor(private readonly options: MedicusOption = {}) {
+  /** Context used for the checkers */
+  public context: C;
+
+  constructor(private readonly options: MedicusOption<C> = {}) {
     if (this.options.checkers) {
       this.addChecker(this.options.checkers);
     }
+
+    this.context = this.options.context ?? (undefined as C);
 
     this.#handleBackgroundCheck();
   }
@@ -30,7 +35,7 @@ export class Medicus {
   /**
    * Adds a new checker to be executed when the health check is run
    */
-  addChecker(checkers: Record<string, HealthChecker>): void {
+  addChecker(checkers: Record<string, HealthChecker<C>>): void {
     for (const name in checkers) {
       if (this.checkers.has(name)) {
         throw new Error(`A checker with the name "${name}" is already registered`);
@@ -43,14 +48,14 @@ export class Medicus {
   /**
    * Returns an read-only iterator of all the checkers
    */
-  listCheckers(): MapIterator<HealthChecker> {
+  listCheckers(): MapIterator<HealthChecker<C>> {
     return this.checkers.values();
   }
 
   /**
    * Removes a checker from the list of checkers to be executed
    */
-  removeChecker(...checkerOrNames: (HealthChecker | string)[]): void {
+  removeChecker(...checkerOrNames: (HealthChecker<C> | string)[]): void {
     for (const checker of checkerOrNames) {
       this.checkers.delete(typeof checker === 'function' ? checker.name : checker);
     }
@@ -101,9 +106,9 @@ export class Medicus {
    *
    * **This function never throws**
    */
-  async #executeChecker(checker: HealthChecker): Promise<DetailedHealthCheck> {
+  async #executeChecker(checker: HealthChecker<C>): Promise<DetailedHealthCheck> {
     try {
-      const check = await checker();
+      const check = await checker(this.context);
 
       switch (typeof check) {
         case 'string':

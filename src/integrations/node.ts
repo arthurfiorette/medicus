@@ -27,4 +27,4 @@ export const NodeCheckers = {
       }
     };
   }
-} as const satisfies Record<string, HealthChecker>;
+} as const satisfies Record<string, HealthChecker<void>>;

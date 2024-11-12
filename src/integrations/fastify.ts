@@ -1,5 +1,5 @@
 import { Type } from '@sinclair/typebox';
-import type { FastifyRequest, RouteOptions } from 'fastify';
+import type { FastifyInstance, FastifyRequest, RouteOptions } from 'fastify';
 import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
 import { AllSchemas, HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
@@ -11,7 +11,7 @@ declare module 'fastify' {
     /**
      * The medicus instance that can be used to perform health checks
      */
-    medicus: Medicus;
+    medicus: Medicus<FastifyInstance>;
   }
 }
 
@@ -20,7 +20,10 @@ declare module 'fastify' {
  */
 export type DebugDetector = boolean | ((req: FastifyRequest) => boolean | Promise<boolean>);
 
-export type FastifyMedicsPluginOptions = Omit<MedicusOption, 'manualClearBackgroundCheck'> & {
+export type FastifyMedicsPluginOptions = Omit<
+  MedicusOption<FastifyInstance>,
+  'manualClearBackgroundCheck' | 'context'
+> & {
   /**
    * If the health check route should be hidden from the documentation
    *
@@ -48,6 +51,7 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
     fastify.decorate(
       'medicus',
       new Medicus({
+        context: fastify,
         ...medicusOptions,
         // better to close on fastify close
         manualClearBackgroundCheck: true

@@ -34,9 +34,10 @@ export interface HealthCheckResult {
 /**
  * A health check function that can be used to check if a part of the system is healthy
  */
-export interface HealthChecker {
+export interface HealthChecker<C> {
   (
-    this: void
+    this: void,
+    ctx: C
   ):
     | void
     | HealthStatus
@@ -49,11 +50,16 @@ export interface HealthChecker {
   name: string;
 }
 
-export interface MedicusOption {
+export interface MedicusOption<C> {
   /**
    * List of checkers to automatically add to the medicus instance
    */
-  checkers?: Record<string, HealthChecker>;
+  checkers?: Record<string, HealthChecker<C>>;
+
+  /**
+   * Context for the checkers to be executed in
+   */
+  context?: C;
 
   /**
    * If provided, this function will be called whenever an error occurs during the execution of a health check
