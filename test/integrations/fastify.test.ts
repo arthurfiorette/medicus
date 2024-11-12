@@ -207,4 +207,47 @@ describe('medicusPlugin()', () => {
       }
     });
   });
+
+  it('simulates different statuses', async () => {
+    await using app = fastify();
+    await app.register(medicusPlugin, {
+      debug: true,
+      checkers: {
+        checker() {
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    const normal = await app.inject({
+      method: 'GET',
+      url: '/health'
+    });
+
+    assert.deepStrictEqual(normal.json(), {
+      status: HealthStatus.HEALTHY,
+      services: {
+        checker: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      query: {
+        simulate: HealthStatus.UNHEALTHY
+      }
+    });
+
+    assert.deepStrictEqual(response.json(), {
+      status: HealthStatus.UNHEALTHY,
+      services: {
+        checker: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
+  });
 });

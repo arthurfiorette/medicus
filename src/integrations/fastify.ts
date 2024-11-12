@@ -101,10 +101,13 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
           result = await this.medicus.performCheck();
         }
 
-        reply.status(healthStatusToHttpStatus(result.status));
+        //@ts-expect-error - untyped from querystring
+        const status = request.query.simulate || result.status;
+
+        reply.status(healthStatusToHttpStatus(status));
 
         return {
-          status: result.status,
+          status: status,
           services: (typeof debug === 'boolean' ? debug : await debug(request))
             ? result.services
             : {}

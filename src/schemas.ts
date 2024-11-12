@@ -35,6 +35,11 @@ export const HealthCheckQueryParamsSchema = Type.Object(
       Type.Boolean({
         description: 'If set to true, the last health check result will be returned'
       })
+    ),
+    simulate: Type.Optional(
+      Type.Ref(HealthStatusSchema, {
+        description: 'Simulates the health check result'
+      })
     )
   },
   {
