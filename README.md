@@ -13,6 +13,15 @@ Medicus is a comprehensive, agnostic health check library for Node.js. It provid
 - [Examples](#examples)
   - [Background Health Checks](#background-health-checks)
   - [Error Logging](#error-logging)
+  - [HealthChecker Return Types](#healthchecker-return-types)
+    - [1. `void`](#1-void)
+    - [2. `HealthStatus`](#2-healthstatus)
+    - [3. `DetailedHealthCheck`](#3-detailedhealthcheck)
+    - [4. `Promise<void>`](#4-promisevoid)
+    - [5. `Promise<HealthStatus>`](#5-promisehealthstatus)
+    - [6. `Promise<DetailedHealthCheck>`](#6-promisedetailedhealthcheck)
+    - [Handling Promise Rejections](#handling-promise-rejections)
+    - [Using `errorLogger`](#using-errorlogger)
 - [Fastify Route](#fastify-route)
 - [Tests](#tests)
 - [License](#license)
@@ -145,6 +154,144 @@ const medicus = new Medicus({
   }
 });
 ```
+
+### HealthChecker Return Types
+
+A `HealthChecker` function is used to determine the health status of a specific service or subsystem within your application. The function signature allows for multiple return types to accommodate various levels of detail and asynchronous operations.
+
+#### 1. `void`
+
+The simplest return type indicates that the service is considered **healthy**. For example:
+
+```typescript
+function simpleChecker(): void {
+  // No return means the service is healthy
+}
+```
+
+#### 2. `HealthStatus`
+
+The `HealthStatus` enum provides three possible values to represent the general health status:
+
+- **`HealthStatus.HEALTHY`**: Indicates the service is fully operational.
+- **`HealthStatus.DEGRADED`**: Indicates the service is operational but with reduced performance or limited functionality.
+- **`HealthStatus.UNHEALTHY`**: Indicates the service is non-operational or has severe issues.
+
+Example:
+
+```typescript
+function enumChecker(): HealthStatus {
+  return HealthStatus.HEALTHY; // The service is healthy
+}
+```
+
+#### 3. `DetailedHealthCheck`
+
+The `DetailedHealthCheck` interface provides a more comprehensive status report, including optional debug information:
+
+```typescript
+interface DetailedHealthCheck {
+  status: HealthStatus; // The health status of the service
+  debug?: Record<string, number | boolean | string>; // Optional key-value debug details
+}
+```
+
+Example:
+
+```typescript
+function detailedChecker(): DetailedHealthCheck {
+  return {
+    status: HealthStatus.DEGRADED,
+    debug: {
+      responseTime: '500ms' // Additional debug information
+    }
+  };
+}
+```
+
+#### 4. `Promise<void>`
+
+A `HealthChecker` can also return a `Promise<void>`, allowing for asynchronous checks. This indicates the service is healthy:
+
+```typescript
+async function asyncVoidChecker(): Promise<void> {
+  await someAsyncOperation();
+  // No return means the service is healthy
+}
+```
+
+#### 5. `Promise<HealthStatus>`
+
+You can return a `Promise<HealthStatus>` for async checks that need to return a basic health status:
+
+```typescript
+async function asyncEnumChecker(): Promise<HealthStatus> {
+  const status = await fetchServiceStatus();
+  return status ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY;
+}
+```
+
+#### 6. `Promise<DetailedHealthCheck>`
+
+For asynchronous checks that require detailed reporting, you can return a `Promise<DetailedHealthCheck>`:
+
+```typescript
+async function asyncDetailedChecker(): Promise<DetailedHealthCheck> {
+  const latency = await measureLatency();
+  return {
+    status:
+      latency < 1000 ? HealthStatus.HEALTHY : HealthStatus.DEGRADED,
+    debug: {
+      latency: `${latency}ms`
+    }
+  };
+}
+```
+
+When a `HealthChecker` returns a `Promise` that rejects, Medicus interprets this as an **unhealthy** status. Rejected promises are treated as errors, and Medicus will handle them according to the configuration provided, such as logging the error or adding debug information to the health check result.
+
+#### Handling Promise Rejections
+
+1. **Uncaught Error or Explicit `throw`**
+
+   If an error occurs in the `HealthChecker` or you explicitly throw an error, Medicus will mark the service as **unhealthy** and include the error information in the result.
+
+   Example:
+
+   ```typescript
+   async function rejectingChecker(): Promise<void> {
+     // An error occurs
+     throw new Error('Service is down');
+   }
+   ```
+
+   Medicus will capture the error and structure the health check result like this:
+
+   ```typescript
+   {
+     status: HealthStatus.UNHEALTHY,
+     services: {
+       rejectingChecker: {
+         status: HealthStatus.UNHEALTHY,
+         debug: { error: [Error object] } // Error information
+       }
+     }
+   }
+   ```
+
+#### Using `errorLogger`
+
+To handle errors more specifically, you can provide an `errorLogger` function in the `MedicusOption`:
+
+```typescript
+const medicus = new Medicus({
+  errorLogger: (error, checkerName) => {
+    console.error(`Error in checker '${checkerName}':`, error);
+  }
+});
+```
+
+This `errorLogger` function is called whenever a `HealthChecker` throws an error or rejects a promise. It allows you to log or process errors in a custom way.
 
 ## Fastify Route
 
