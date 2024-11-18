@@ -24,7 +24,7 @@
     "test": "c8 --reporter lcov --reporter text tsx --enable-source-maps --test test/**/*.test.ts"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.33.22",
+    "@sinclair/typebox": "^0.34.3",
     "close-with-grace": "^2.1.0",
     "tslib": "^2.8.1"
   },
