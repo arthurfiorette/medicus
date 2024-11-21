@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@sinclair/typebox':
-        specifier: ^0.33.22
-        version: 0.33.22
+        specifier: ^0.34.7
+        version: 0.34.7
       avvio:
         specifier: ^9.1.0
         version: 9.1.0
@@ -294,8 +294,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@sinclair/typebox@0.33.22':
-    resolution: {integrity: sha512-auUj4k+f4pyrIVf4GW5UKquSZFHJWri06QgARy9C0t9ZTjJLIuNIrr1yl9bWcJWJ1Gz1vOvYN1D+QPaIlNMVkQ==}
+  '@sinclair/typebox@0.34.7':
+    resolution: {integrity: sha512-DUwBGDigO05iE79KzvYj/5qlrX4ZV2ccDN8SAMwqIr37xQTEoaKY2w3PD3pVzkhV9lGaJlyE0YMWC94HuAnftw==}
 
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
@@ -872,7 +872,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@sinclair/typebox@0.33.22': {}
+  '@sinclair/typebox@0.34.7': {}
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
