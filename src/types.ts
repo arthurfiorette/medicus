@@ -7,64 +7,52 @@ export enum HealthStatus {
 }
 
 export interface DetailedHealthCheck {
-  /**
-   * The status of the health check
-   */
+  /** The status of the health check */
   status: HealthStatus;
 
-  /**
-   * A list of key-value pairs with additional information about the health check
-   * to be shown in the debug output
-   */
+  /** A list of key-value pairs with additional information about the health check to be shown in the debug output */
   debug?: Record<string, number | boolean | string>;
 }
 
 export interface HealthCheckResult {
-  /**
-   * The status of the health check
-   */
+  /** The status of the health check */
   status: HealthStatus;
 
-  /**
-   * A per service breakdown of the health check results
-   */
+  /** A per service breakdown of the health check results */
   services: Record<string, DetailedHealthCheck>;
 }
 
+/** A health check function that can be used to check if a part of the system is healthy */
+export type HealthChecker<C> = (
+  this: void,
+  ctx: C
+) =>
+  | void
+  | HealthStatus
+  | DetailedHealthCheck
+  | Promise<void>
+  | Promise<HealthStatus>
+  | Promise<DetailedHealthCheck>;
+
 /**
- * A health check function that can be used to check if a part of the system is healthy
+ * Function signature for the error logger
  */
-export interface HealthChecker<C> {
-  (
-    this: void,
-    ctx: C
-  ):
-    | void
-    | HealthStatus
-    | DetailedHealthCheck
-    | Promise<void>
-    | Promise<HealthStatus>
-    | Promise<DetailedHealthCheck>;
+export type MedicusErrorLogger = (error: unknown, checkerName: string) => void;
 
-  /** The (sub)service name this checks for */
-  name: string;
-}
+export interface MedicusOption<Ctx> {
+  /** List of checkers to automatically add to the medicus instance */
+  checkers?: Record<string, HealthChecker<Ctx>>;
 
-export interface MedicusOption<C> {
-  /**
-   * List of checkers to automatically add to the medicus instance
-   */
-  checkers?: Record<string, HealthChecker<C>>;
-
-  /**
-   * Context for the checkers to be executed in
-   */
-  context?: C;
+  /** Context for the checkers to be executed in */
+  context?: Ctx;
 
   /**
    * If provided, this function will be called whenever an error occurs during the execution of a health check
+   *
+   * If `onBackgroundCheck` is provided and throws an error, this function will be called and `onBackgroundCheck` will
+   * be the second parameter
    */
-  errorLogger?: (error: unknown, checkerName: string) => void;
+  errorLogger?: MedicusErrorLogger;
 
   /**
    * By default {@linkcode Medicus.performCheck} needs to be called manually to perform a health check.
@@ -76,9 +64,10 @@ export interface MedicusOption<C> {
   backgroundCheckInterval?: number;
 
   /**
-   * If set to true, {@linkcode Medicus.closeBackgroundCheck} should be manually called to stop the background check.
+   * Called for every generated background check result.
    *
-   * @default false
+   * Some non-exposed systems, instead of providing as a API to be called by third-party systems, they must manually
+   * push the result into another API in form of a cron-job or heartbeat mechanism.
    */
-  manualClearBackgroundCheck?: boolean;
+  onBackgroundCheck?: (result: HealthCheckResult) => void | Promise<void>;
 }

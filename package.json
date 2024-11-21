@@ -1,6 +1,6 @@
 {
   "name": "medicus",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "bugs": {
     "url": "https://github.com/arthurfiorette/medicus/issues"
   },
@@ -13,7 +13,17 @@
   "sideEffects": false,
   "type": "commonjs",
   "main": "dist/index.js",
-  "files": ["dist", "fastify.d.ts", "fastify.js", "node.d.ts", "node.js", "LICENSE", "README.md"],
+  "files": [
+    "avvio.d.ts",
+    "avvio.js",
+    "fastify.d.ts",
+    "fastify.js",
+    "node.d.ts",
+    "node.js",
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "biome format --write .",
@@ -25,7 +35,6 @@
   },
   "dependencies": {
     "@sinclair/typebox": "^0.33.22",
-    "close-with-grace": "^2.1.0",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
@@ -39,14 +48,22 @@
     "typescript": "^5.6.3"
   },
   "peerDependencies": {
+    "avvio": "^9.1.0",
     "fastify": "^5.1.0",
-    "fastify-plugin": "^5.0.1"
+    "fastify-plugin": "^5.0.1",
+    "pino": "^9.5.0"
   },
   "peerDependenciesMeta": {
+    "avvio": {
+      "optional": true
+    },
     "fastify": {
       "optional": true
     },
     "fastify-plugin": {
+      "optional": true
+    },
+    "pino": {
       "optional": true
     }
   },

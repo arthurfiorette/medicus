@@ -4,20 +4,17 @@ import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
 import { AllSchemas, HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
+import { pinoToErrorLogger } from '../utils';
 import { HttpStatuses, healthStatusToHttpStatus } from '../utils/http';
 
 declare module 'fastify' {
   interface FastifyInstance {
-    /**
-     * The medicus instance that can be used to perform health checks
-     */
+    /** The medicus instance that can be used to perform health checks */
     medicus: Medicus<FastifyInstance>;
   }
 }
 
-/**
- * A detector function that can be used to determine if the debug output should be shown
- */
+/** A detector function that can be used to determine if the debug output should be shown */
 export type DebugDetector = boolean | ((req: FastifyRequest) => boolean | Promise<boolean>);
 
 export type FastifyMedicsPluginOptions = Omit<
@@ -39,20 +36,31 @@ export type FastifyMedicsPluginOptions = Omit<
   debug?: DebugDetector;
 };
 
+/**
+ * A fastify plugin that registers a health check route and a medicus instance
+ *
+ * @example
+ *
+ * ```ts
+ * app.register(medicusPlugin, {
+ *   checkers: {
+ *     db() {
+ *       return true;
+ *     }
+ *   }
+ * });
+ * ```
+ */
 export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
   async (fastify, { route, debug = false, ...medicusOptions }) => {
     fastify.decorate(
       'medicus',
       new Medicus({
         ...medicusOptions,
-        // better to close on fastify close
-        manualClearBackgroundCheck: true,
         // auto inject context
         context: fastify,
         // logs to fastify logger
-        errorLogger: (error, checkerName) => {
-          fastify.log.error(error, `Health check failed for ${checkerName}`);
-        }
+        errorLogger: pinoToErrorLogger(fastify.log)
       })
     );
 
@@ -117,7 +125,7 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
 
     if (medicusOptions.backgroundCheckInterval) {
       fastify.addHook('onClose', async function () {
-        this.medicus.closeBackgroundCheck();
+        this.medicus.stopBackgroundCheck();
       });
     }
   },

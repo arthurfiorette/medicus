@@ -7,7 +7,7 @@ import { medicusPlugin } from '../../src/integrations/fastify';
 describe('medicusPlugin()', () => {
   it('registers a health check route', async () => {
     await using app = fastify();
-    await app.register(medicusPlugin, {});
+    await app.register(medicusPlugin);
 
     assert.ok(app.medicus instanceof Medicus);
 

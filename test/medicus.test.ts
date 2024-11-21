@@ -243,8 +243,7 @@ describe('Medicus', () => {
   it('runs checks in the background', async () => {
     using medicus = new Medicus({
       checkers: { success() {} },
-      backgroundCheckInterval: 10,
-      manualClearBackgroundCheck: true
+      backgroundCheckInterval: 10
     });
 
     assert.equal(medicus.getLastCheck(), null);
@@ -259,5 +258,47 @@ describe('Medicus', () => {
         }
       }
     });
+  });
+
+  it('calls onBackgroundCheck when a health check runs in the background', async () => {
+    let onBackgroundCheckCalled = false;
+    let param: any;
+
+    using medicus = new Medicus({
+      checkers: { success() {} },
+      backgroundCheckInterval: 10,
+      onBackgroundCheck(p) {
+        param = p;
+        onBackgroundCheckCalled = true;
+      }
+    });
+
+    assert.equal(medicus.getLastCheck(), null);
+
+    await setTimeout(20);
+
+    assert(onBackgroundCheckCalled);
+    assert.equal(param, medicus.getLastCheck());
+  });
+
+  it('calls errorLogger when onBackgroundCheck throws', async () => {
+    let loggedError: any = null;
+
+    using _ = new Medicus({
+      checkers: { success() {} },
+      backgroundCheckInterval: 10,
+      onBackgroundCheck() {
+        throw new Error('This is an error');
+      },
+      errorLogger: (error, checkerName) => {
+        loggedError = { error, checkerName };
+      }
+    });
+
+    await setTimeout(20);
+
+    assert(loggedError !== null);
+    assert(loggedError.error instanceof Error);
+    assert.strictEqual(loggedError.checkerName, 'onBackgroundCheck');
   });
 });

@@ -1,4 +1,3 @@
-import closeWithGrace from 'close-with-grace';
 import {
   type DetailedHealthCheck,
   type HealthCheckResult,
@@ -17,19 +16,19 @@ export class Medicus<C = void> {
   /**
    * The interval id of the background check if it's running
    */
-  private backgroundCheckIntervalId: NodeJS.Timeout | null = null;
+  private backgroundCheckTimer: NodeJS.Timeout | null = null;
 
   /** Context used for the checkers */
   public context: C;
 
-  constructor(private readonly options: MedicusOption<C> = {}) {
+  constructor(readonly options: MedicusOption<C> = {}) {
     if (this.options.checkers) {
       this.addChecker(this.options.checkers);
     }
 
     this.context = this.options.context ?? (undefined as C);
 
-    this.#handleBackgroundCheck();
+    this.startBackgroundCheck();
   }
 
   /**
@@ -71,7 +70,7 @@ export class Medicus<C = void> {
   /**
    * Performs a health check and returns the result
    */
-  performCheck = async (): Promise<HealthCheckResult> => {
+  async performCheck(): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
@@ -90,7 +89,7 @@ export class Medicus<C = void> {
     };
 
     return this.lastCheck;
-  };
+  }
 
   /**
    * Returns a generator that runs all the health checks and yields the results
@@ -119,9 +118,7 @@ export class Medicus<C = void> {
           return { status: HealthStatus.HEALTHY };
       }
     } catch (error) {
-      if (this.options.errorLogger) {
-        this.options.errorLogger(error, checker.name);
-      }
+      this.options.errorLogger?.(error, checker.name);
 
       return {
         status: HealthStatus.UNHEALTHY,
@@ -131,46 +128,61 @@ export class Medicus<C = void> {
   }
 
   /**
+   * Bound function to be passed as reference that performs the background check
+   * and calls the `onBackgroundCheck` callback if it's set
+   */
+  #performBackgroundCheck = async (): Promise<void> => {
+    const result = await this.performCheck();
+
+    // Calls the onBackgroundCheck callback if it's set
+    if (this.options.onBackgroundCheck) {
+      try {
+        await this.options.onBackgroundCheck(result);
+      } catch (error) {
+        // nothing much we can do if there isn't a logger
+        this.options.errorLogger?.(error, 'onBackgroundCheck');
+      }
+    }
+
+    // Runs the background check again with the same interval
+    // unless it was manually removed
+    this.backgroundCheckTimer?.refresh();
+  };
+
+  /**
    * Starts the background check if it's not already running
    */
-  #handleBackgroundCheck() {
+  readonly startBackgroundCheck = () => {
     if (
       // already called
-      this.backgroundCheckIntervalId ||
+      this.backgroundCheckTimer ||
       // no interval set
       !this.options.backgroundCheckInterval
     ) {
       return;
     }
 
-    this.backgroundCheckIntervalId = setInterval(
-      this.performCheck,
+    this.backgroundCheckTimer = setTimeout(
+      this.#performBackgroundCheck,
       this.options.backgroundCheckInterval
     );
 
-    if (!this.options.manualClearBackgroundCheck) {
-      closeWithGrace(
-        {
-          delay: 500,
-          logger: this.options.errorLogger ? { error: this.options.errorLogger } : undefined
-        },
-        this.closeBackgroundCheck
-      );
-    }
-  }
+    // Unrefs the timer so it doesn't keep the process running
+    this.backgroundCheckTimer.unref();
+  };
 
   /**
    * Stops the background check if it's running
    */
-  readonly closeBackgroundCheck = (): void => {
-    if (this.backgroundCheckIntervalId) {
-      clearInterval(this.backgroundCheckIntervalId);
-      this.backgroundCheckIntervalId = null;
+  readonly stopBackgroundCheck = (): void => {
+    if (this.backgroundCheckTimer) {
+      clearTimeout(this.backgroundCheckTimer);
+      this.backgroundCheckTimer = null;
     }
   };
 
   /** to be used as `using medicus = new Medicus()` */
   [Symbol.dispose]() {
-    this.closeBackgroundCheck();
+    this.stopBackgroundCheck();
   }
 }

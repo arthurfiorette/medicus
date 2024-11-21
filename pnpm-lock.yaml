@@ -11,15 +11,18 @@ importers:
       '@sinclair/typebox':
         specifier: ^0.33.22
         version: 0.33.22
-      close-with-grace:
-        specifier: ^2.1.0
-        version: 2.1.0
+      avvio:
+        specifier: ^9.1.0
+        version: 9.1.0
       fastify:
         specifier: ^5.1.0
         version: 5.1.0
       fastify-plugin:
         specifier: ^5.0.1
         version: 5.0.1
+      pino:
+        specifier: ^9.5.0
+        version: 9.5.0
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -356,9 +359,6 @@ packages:
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
-
-  close-with-grace@2.1.0:
-    resolution: {integrity: sha512-rME1AtzKc9dfpLr8XBVhXqhVZDvtaIA7FIpjPaO+DmDsomaTNtuEBZMoNDgIvjHYK5q8/Afxy34YTXInUBsT1A==}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -935,8 +935,6 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
-
-  close-with-grace@2.1.0: {}
 
   color-convert@2.0.1:
     dependencies:

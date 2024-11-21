@@ -22,6 +22,7 @@ Medicus is a comprehensive, agnostic health check library for Node.js. It provid
     - [6. `Promise<DetailedHealthCheck>`](#6-promisedetailedhealthcheck)
     - [Handling Promise Rejections](#handling-promise-rejections)
     - [Using `errorLogger`](#using-errorlogger)
+- [`setTimeout` vs `setInterval`](#settimeout-vs-setinterval)
 - [Fastify Route](#fastify-route)
 - [Tests](#tests)
 - [License](#license)
@@ -292,6 +293,14 @@ const medicus = new Medicus({
 ```
 
 This `errorLogger` function is called whenever a `HealthChecker` throws an error or rejects a promise. It allows you to log or process errors in a custom way.
+
+## `setTimeout` vs `setInterval`
+
+Under the hood the `medicus` uses the `setTimeout` method to perform its pooled background checks. The choice is based on the fact that we do not want to add additional pressure to the system.
+
+In fact, it is known that `setInterval` will call repeatedly at the scheduled time regardless of whether the previous call ended or not, and if the server is already under load, this will likely increase the problem, because those `setInterval` calls will start piling up. `setTimeout`, on the other hand, is called only once and does not cause the mentioned problem.
+
+One note to consider is that because the two methods are not identical, the timer function is not guaranteed to run at exactly the same rate when the system is under pressure or running a long-running process.
 
 ## Fastify Route
 
