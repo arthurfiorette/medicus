@@ -7,8 +7,6 @@ export default defineConfig({
 
   head: [['link', { rel: 'icon', href: '/medicus.svg', type: 'image/x-icon' }]],
 
-  base: '/medicus/',
-
   themeConfig: {
     logo: '/medicus.svg',
 
