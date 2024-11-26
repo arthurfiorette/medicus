@@ -5,7 +5,7 @@ export const NodeCheckers = {
   /**
    * A simple nodejs health checker which returns the current status of the node process
    */
-  node() {
+  process() {
     const cpuUsage = process.cpuUsage();
     const loadAverage = os.loadavg();
 

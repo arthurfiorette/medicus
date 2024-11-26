@@ -7,7 +7,7 @@ export const HealthStatusSchema = Type.Enum(HealthStatus, {
 
 export const DetailedHealthCheckSchema = Type.Object(
   {
-    status: Type.Ref(HealthStatusSchema),
+    status: Type.Ref(HealthStatusSchema.$id!),
     debug: Type.Optional(
       Type.Record(Type.String(), Type.Union([Type.Number(), Type.Boolean(), Type.String()]))
     )
@@ -20,8 +20,8 @@ export const DetailedHealthCheckSchema = Type.Object(
 
 export const HealthCheckResultSchema = Type.Object(
   {
-    status: Type.Ref(HealthStatusSchema),
-    services: Type.Record(Type.String(), Type.Ref(DetailedHealthCheckSchema))
+    status: Type.Ref(HealthStatusSchema.$id!),
+    services: Type.Record(Type.String(), Type.Ref(DetailedHealthCheckSchema.$id!))
   },
   {
     $id: 'MedicusHealthCheckResult',
@@ -37,7 +37,7 @@ export const HealthCheckQueryParamsSchema = Type.Object(
       })
     ),
     simulate: Type.Optional(
-      Type.Ref(HealthStatusSchema, {
+      Type.Ref(HealthStatusSchema.$id!, {
         description: 'Simulates the health check result'
       })
     )

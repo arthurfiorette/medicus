@@ -22,8 +22,8 @@ export function pinoToErrorLogger(logger: BasePinoLogger): MedicusErrorLogger {
 /**
  * Simple factory to create a MedicusErrorLogger from a `console.error`-like function
  */
-export function consoleToErrorLogger(logger: Console['error'] = console.error) {
-  return (error: unknown, checkerName: string) => {
+export function consoleToErrorLogger(logger: Console['error'] = console.error): MedicusErrorLogger {
+  return (error, checkerName) => {
     return logger(`Health check failed for ${checkerName}`, error);
   };
 }

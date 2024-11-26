@@ -2,6 +2,7 @@ import {
   type DetailedHealthCheck,
   type HealthCheckResult,
   type HealthChecker,
+  type HealthCheckerMap,
   HealthStatus,
   type MedicusOption
 } from './types';
@@ -9,8 +10,8 @@ import {
 /**
  * A class that can be used to perform health checks on a system
  */
-export class Medicus<C = void> {
-  private checkers: Map<string, HealthChecker<C>> = new Map();
+export class Medicus<Ctx = void> {
+  private checkers: Map<string, HealthChecker<Ctx>> = new Map();
   private lastCheck: HealthCheckResult | null = null;
 
   /**
@@ -19,14 +20,14 @@ export class Medicus<C = void> {
   private backgroundCheckTimer: NodeJS.Timeout | null = null;
 
   /** Context used for the checkers */
-  public context: C;
+  public context: Ctx;
 
-  constructor(readonly options: MedicusOption<C> = {}) {
+  constructor(readonly options: MedicusOption<Ctx> = {}) {
     if (this.options.checkers) {
       this.addChecker(this.options.checkers);
     }
 
-    this.context = this.options.context ?? (undefined as C);
+    this.context = this.options.context ?? (undefined as Ctx);
 
     this.startBackgroundCheck();
   }
@@ -34,7 +35,7 @@ export class Medicus<C = void> {
   /**
    * Adds a new checker to be executed when the health check is run
    */
-  addChecker(checkers: Record<string, HealthChecker<C>>): void {
+  addChecker(checkers: HealthCheckerMap<Ctx>): void {
     for (const name in checkers) {
       if (this.checkers.has(name)) {
         throw new Error(`A checker with the name "${name}" is already registered`);
@@ -47,30 +48,47 @@ export class Medicus<C = void> {
   /**
    * Returns an read-only iterator of all the checkers
    */
-  listCheckers(): MapIterator<HealthChecker<C>> {
+  listCheckers(): MapIterator<HealthChecker<Ctx>> {
     return this.checkers.values();
   }
 
   /**
    * Removes a checker from the list of checkers to be executed
+   *
+   * @returns `true` if all provided checkers were removed, `false` otherwise
    */
-  removeChecker(...checkerOrNames: (HealthChecker<C> | string)[]): void {
-    for (const checker of checkerOrNames) {
-      this.checkers.delete(typeof checker === 'function' ? checker.name : checker);
+  removeChecker(...checkerNames: string[]): boolean {
+    let allRemoved = true;
+
+    for (const name of checkerNames) {
+      allRemoved &&= this.checkers.delete(name);
     }
+
+    return allRemoved;
   }
 
   /**
-   * Returns the last health check result
+   * Returns the last health check result with debug information if it's set
+   *
+   * - `debug` defaults to `false`
    */
-  getLastCheck(): HealthCheckResult | null {
-    return this.lastCheck;
+  getLastCheck(debug = false): HealthCheckResult | null {
+    if (!this.lastCheck) {
+      return null;
+    }
+
+    return {
+      status: this.lastCheck.status,
+      services: debug ? this.lastCheck.services : {}
+    };
   }
 
   /**
    * Performs a health check and returns the result
+   *
+   * - `debug` defaults to `false`
    */
-  async performCheck(): Promise<HealthCheckResult> {
+  async performCheck(debug = false): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
@@ -88,7 +106,7 @@ export class Medicus<C = void> {
       services
     };
 
-    return this.lastCheck;
+    return this.getLastCheck(debug)!;
   }
 
   /**
@@ -105,7 +123,7 @@ export class Medicus<C = void> {
    *
    * **This function never throws**
    */
-  async #executeChecker(checker: HealthChecker<C>): Promise<DetailedHealthCheck> {
+  async #executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
     try {
       const check = await checker(this.context);
 
@@ -132,7 +150,7 @@ export class Medicus<C = void> {
    * and calls the `onBackgroundCheck` callback if it's set
    */
   #performBackgroundCheck = async (): Promise<void> => {
-    const result = await this.performCheck();
+    const result = await this.performCheck(true);
 
     // Calls the onBackgroundCheck callback if it's set
     if (this.options.onBackgroundCheck) {

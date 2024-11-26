@@ -92,34 +92,31 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
         tags: ['Health'],
         description: 'Performs a health check on the system',
         response: Object.fromEntries(
-          HttpStatuses.map((status) => [status, Type.Ref(HealthCheckResultSchema)])
+          HttpStatuses.map((status) => [status, Type.Ref(HealthCheckResultSchema.$id!)])
         ),
-        querystring: Type.Ref(HealthCheckQueryParamsSchema),
+        querystring: Type.Ref(HealthCheckQueryParamsSchema.$id!),
         ...route?.schema
       },
       async handler(request, reply): Promise<HealthCheckResult> {
         let result: HealthCheckResult | null = null;
 
+        const isDebug = typeof debug === 'boolean' ? debug : await debug(request);
+
         //@ts-expect-error - untyped from querystring
         if (request.query.last) {
-          result = this.medicus.getLastCheck();
+          result = this.medicus.getLastCheck(isDebug);
         }
 
         if (!result) {
-          result = await this.medicus.performCheck();
+          result = await this.medicus.performCheck(isDebug);
         }
 
         //@ts-expect-error - untyped from querystring
-        const status = request.query.simulate || result.status;
+        if (request.query.simulate) result.status = request.query.simulate;
 
-        reply.status(healthStatusToHttpStatus(status));
+        reply.status(healthStatusToHttpStatus(result.status));
 
-        return {
-          status: status,
-          services: (typeof debug === 'boolean' ? debug : await debug(request))
-            ? result.services
-            : {}
-        };
+        return result;
       }
     });
 
