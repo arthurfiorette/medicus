@@ -4,7 +4,7 @@ layout: home
 hero:
   name: 'Medicus'
   text: 'Flexible and agnostic health checks.'
-  tagline: Ensure the post-deployment health of your services.
+  tagline: Ensure the post-deployment health of your APIs and Services.
   actions:
     - theme: brand
       text: Get Started
