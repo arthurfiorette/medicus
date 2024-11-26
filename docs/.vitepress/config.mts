@@ -90,7 +90,7 @@ export default defineConfig({
 
     footer: {
       message: 'Released under the MIT License',
-      copyright: 'Copyright © 2024-present - Arthur Fiorette & Medicus Contributors'
+      copyright: `Copyright © ${new Date().getFullYear()} - Arthur Fiorette & Medicus Contributors`
     },
 
     socialLinks: [
@@ -172,7 +172,7 @@ export default defineConfig({
           },
           {
             text: 'Open Telemetry',
-            link: 'otel.md'
+            link: 'open-telemetry.md'
           }
         ]
       }

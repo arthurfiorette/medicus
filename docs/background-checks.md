@@ -18,7 +18,7 @@ const medicus = new Medicus({
 After setting up the background check interval, you can retrieve the result of the last performed check using `getLastCheck()`. If the check has never been run, it will return `null`.
 
 ```ts
-const check = medicus.getLastCheck(true /* debug */);
+const check = medicus.getLastCheck(true);
 
 // Prints `null` if the check has never been run
 // or the details of the last check
