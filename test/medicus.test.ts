@@ -7,7 +7,7 @@ describe('Medicus', () => {
   it('returns healthy when no checkers are added', async () => {
     using medicus = new Medicus({});
 
-    const result = await medicus.performCheck();
+    const result = await medicus.performCheck(true);
 
     assert.deepStrictEqual(result, {
       status: HealthStatus.HEALTHY,
@@ -27,7 +27,7 @@ describe('Medicus', () => {
       }
     });
 
-    const result = await medicus.performCheck();
+    const result = await medicus.performCheck(true);
 
     assert.deepStrictEqual(result, {
       status: HealthStatus.UNHEALTHY,
@@ -51,7 +51,7 @@ describe('Medicus', () => {
       }
     });
 
-    const result = await medicus.performCheck();
+    const result = await medicus.performCheck(true);
 
     assert.deepStrictEqual(result, {
       status: HealthStatus.UNHEALTHY,
@@ -96,7 +96,7 @@ describe('Medicus', () => {
       }
     });
 
-    const result = await medicus.performCheck();
+    const result = await medicus.performCheck(true);
 
     assert.deepStrictEqual(result, {
       status: HealthStatus.UNHEALTHY,
@@ -143,65 +143,33 @@ describe('Medicus', () => {
     });
   });
 
-  test('removes a checker at runtime', async (t) => {
-    await t.test('by reference', async () => {
-      using medicus = new Medicus();
+  test('removes a checker at runtime by name', async () => {
+    using medicus = new Medicus();
 
-      function checker() {
+    medicus.addChecker({
+      checker() {
         return HealthStatus.HEALTHY;
       }
-
-      medicus.addChecker({ checker });
-
-      let result = await medicus.performCheck();
-
-      assert.deepStrictEqual(result, {
-        status: HealthStatus.HEALTHY,
-        services: {
-          checker: {
-            status: HealthStatus.HEALTHY
-          }
-        }
-      });
-
-      medicus.removeChecker(checker);
-
-      result = await medicus.performCheck();
-
-      assert.deepStrictEqual(result, {
-        status: HealthStatus.HEALTHY,
-        services: {}
-      });
     });
 
-    await t.test('by name', async () => {
-      using medicus = new Medicus();
+    let result = await medicus.performCheck(true);
 
-      medicus.addChecker({
-        checker() {
-          return HealthStatus.HEALTHY;
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {
+        checker: {
+          status: HealthStatus.HEALTHY
         }
-      });
+      }
+    });
 
-      let result = await medicus.performCheck();
+    medicus.removeChecker('checker');
 
-      assert.deepStrictEqual(result, {
-        status: HealthStatus.HEALTHY,
-        services: {
-          checker: {
-            status: HealthStatus.HEALTHY
-          }
-        }
-      });
+    result = await medicus.performCheck(true);
 
-      medicus.removeChecker('checker');
-
-      result = await medicus.performCheck();
-
-      assert.deepStrictEqual(result, {
-        status: HealthStatus.HEALTHY,
-        services: {}
-      });
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {}
     });
   });
 
@@ -210,11 +178,11 @@ describe('Medicus', () => {
 
     assert.deepStrictEqual(medicus.getLastCheck(), null);
 
-    const firstCheck = await medicus.performCheck();
+    const firstCheck = await medicus.performCheck(true);
 
     assert.deepStrictEqual(medicus.getLastCheck(), firstCheck);
 
-    const secondCheck = await medicus.performCheck();
+    const secondCheck = await medicus.performCheck(true);
 
     assert.deepStrictEqual(medicus.getLastCheck(), secondCheck);
   });
@@ -233,11 +201,44 @@ describe('Medicus', () => {
       }
     });
 
-    await medicus.performCheck();
+    await medicus.performCheck(true);
 
     assert(loggedError !== null);
     assert(loggedError.error instanceof Error);
     assert.strictEqual(loggedError.checkerName, 'alwaysFails');
+  });
+
+  it('hides information when debug=false', async () => {
+    using medicus = new Medicus({
+      checkers: {
+        success() {}
+      }
+    });
+
+    const result = await medicus.performCheck(false);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {}
+    });
+
+    const detailedResult = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(detailedResult, {
+      status: HealthStatus.HEALTHY,
+      services: {
+        success: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
+
+    const defaultResult = await medicus.performCheck();
+
+    assert.deepStrictEqual(defaultResult, {
+      status: HealthStatus.HEALTHY,
+      services: {}
+    });
   });
 
   it('runs checks in the background', async () => {
@@ -250,7 +251,7 @@ describe('Medicus', () => {
 
     await setTimeout(20);
 
-    assert.deepStrictEqual(medicus.getLastCheck(), {
+    assert.deepStrictEqual(medicus.getLastCheck(true), {
       status: HealthStatus.HEALTHY,
       services: {
         success: {
@@ -278,7 +279,7 @@ describe('Medicus', () => {
     await setTimeout(20);
 
     assert(onBackgroundCheckCalled);
-    assert.equal(param, medicus.getLastCheck());
+    assert.deepStrictEqual(param, medicus.getLastCheck(true));
   });
 
   it('calls errorLogger when onBackgroundCheck throws', async () => {

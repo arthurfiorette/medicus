@@ -62,7 +62,7 @@ medicus.addChecker({
 });
 
 // Perform a health check
-const result = await medicus.performCheck();
+const result = await medicus.performCheck(true);
 // {
 //   status: 'UNHEALTHY',
 //   services: {
