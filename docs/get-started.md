@@ -6,8 +6,6 @@ Medicus offers more than just simplicity; it delivers an extensive ecosystem of 
 
 By providing pre-built checks, clear guidance for setup, and seamless support for your preferred stack, Medicus makes health monitoring effortless yet highly effective. It enables developers to focus on building their applications, confident that system health is being managed with minimal effort and maximum reliability.
 
----
-
 ## Installation
 
 Install Medicus using your preferred package manager:
@@ -27,8 +25,6 @@ yarn add medicus
 ```
 
 :::
-
----
 
 ## Medicus Class
 
@@ -57,8 +53,6 @@ medicus.addChecker({
   }
 });
 ```
-
----
 
 ## Context
 
