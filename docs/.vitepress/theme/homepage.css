@@ -61,6 +61,11 @@
   }
 }
 
+.VPTeamPageTitle {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+
 .VPTeamMembers.medium.count-1 {
   display: flex;
   justify-content: center;

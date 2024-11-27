@@ -1,9 +1,11 @@
 import {
+  type BackgroundCheckListener,
   type DetailedHealthCheck,
   type HealthCheckResult,
   type HealthChecker,
   type HealthCheckerMap,
   HealthStatus,
+  type MedicusErrorLogger,
   type MedicusOption
 } from './types';
 
@@ -11,25 +13,51 @@ import {
  * A class that can be used to perform health checks on a system
  */
 export class Medicus<Ctx = void> {
-  private checkers: Map<string, HealthChecker<Ctx>> = new Map();
-  private lastCheck: HealthCheckResult | null = null;
+  /** The interval id of the background check if it's running */
+  protected backgroundCheckTimer: NodeJS.Timeout | undefined;
 
   /**
-   * The interval id of the background check if it's running
+   * A map of all the checkers that will be executed when the health check is run
+   * with the key being the name of the checker
    */
-  private backgroundCheckTimer: NodeJS.Timeout | null = null;
+  protected checkers: Map<string, HealthChecker<Ctx>> = new Map();
 
-  /** Context used for the checkers */
-  public context: Ctx;
+  /**
+   * The context that will be passed to all the checkers when they
+   * get executed
+   */
+  protected context: Ctx = null as Ctx;
 
-  constructor(readonly options: MedicusOption<Ctx> = {}) {
-    if (this.options.checkers) {
-      this.addChecker(this.options.checkers);
+  /**
+   * The error logger function that will be called whenever an error occurs
+   * during the execution of a health check
+   */
+  protected errorLogger: MedicusErrorLogger;
+
+  /**
+   * The last health check result, this is updated every time a health check
+   * is run and can be accessed with `getLastCheck`
+   */
+  protected lastCheck: HealthCheckResult | undefined;
+
+  /**
+   * The background check defined by the constructor, you can freely change this
+   * to another function or delete it if needed.
+   */
+  public backgroundCheckListener: BackgroundCheckListener | undefined;
+
+  constructor(options: MedicusOption<Ctx> = {}) {
+    this.context = options.context!;
+    this.errorLogger = options.errorLogger!;
+    this.backgroundCheckListener = options.onBackgroundCheck!;
+
+    if (options.checkers) {
+      this.addChecker(options.checkers);
     }
 
-    this.context = this.options.context ?? (undefined as Ctx);
-
-    this.startBackgroundCheck();
+    if (options.backgroundCheckInterval) {
+      this.startBackgroundCheck(options.backgroundCheckInterval);
+    }
   }
 
   /**
@@ -92,7 +120,7 @@ export class Medicus<Ctx = void> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
-    for await (const [serviceName, result] of this.#runChecks()) {
+    for await (const [serviceName, result] of Array.from(this.checkers, this.mapChecker)) {
       if (result.status === HealthStatus.UNHEALTHY) {
         status = HealthStatus.UNHEALTHY;
       }
@@ -110,22 +138,23 @@ export class Medicus<Ctx = void> {
   }
 
   /**
-   * Returns a generator that runs all the health checks and yields the results
+   * Simple helper function to yield the result of a health check
    */
-  async *#runChecks() {
-    for (const [name, checker] of this.checkers) {
-      yield this.#executeChecker(checker).then((res) => [name, res] as const);
-    }
-  }
+  protected readonly mapChecker = async ([name, checker]: [
+    name: string,
+    checker: HealthChecker<Ctx>
+  ]) => {
+    return [name, await this.executeChecker(checker)] as const;
+  };
 
   /**
    * Runs a single health check and returns the result
    *
    * **This function never throws**
    */
-  async #executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
+  protected async executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
     try {
-      const check = await checker(this.context);
+      const check = await checker(this.context!);
 
       switch (typeof check) {
         case 'string':
@@ -136,7 +165,7 @@ export class Medicus<Ctx = void> {
           return { status: HealthStatus.HEALTHY };
       }
     } catch (error) {
-      this.options.errorLogger?.(error, checker.name);
+      this.errorLogger?.(error, checker.name);
 
       return {
         status: HealthStatus.UNHEALTHY,
@@ -149,16 +178,16 @@ export class Medicus<Ctx = void> {
    * Bound function to be passed as reference that performs the background check
    * and calls the `onBackgroundCheck` callback if it's set
    */
-  #performBackgroundCheck = async (): Promise<void> => {
+  protected performBackgroundCheck = async (): Promise<void> => {
     const result = await this.performCheck(true);
 
     // Calls the onBackgroundCheck callback if it's set
-    if (this.options.onBackgroundCheck) {
+    if (this.backgroundCheckListener) {
       try {
-        await this.options.onBackgroundCheck(result);
+        await this.backgroundCheckListener(result);
       } catch (error) {
-        // nothing much we can do if there isn't a logger
-        this.options.errorLogger?.(error, 'onBackgroundCheck');
+        // nothing we can do if there isn't a logger
+        this.errorLogger?.(error, 'onBackgroundCheck');
       }
     }
 
@@ -170,37 +199,27 @@ export class Medicus<Ctx = void> {
   /**
    * Starts the background check if it's not already running
    */
-  readonly startBackgroundCheck = () => {
-    if (
-      // already called
-      this.backgroundCheckTimer ||
-      // no interval set
-      !this.options.backgroundCheckInterval
-    ) {
+  readonly startBackgroundCheck = (interval: number) => {
+    if (this.backgroundCheckTimer) {
       return;
     }
 
-    this.backgroundCheckTimer = setTimeout(
-      this.#performBackgroundCheck,
-      this.options.backgroundCheckInterval
-    );
+    this.backgroundCheckTimer = setTimeout(this.performBackgroundCheck, interval);
 
     // Unrefs the timer so it doesn't keep the process running
     this.backgroundCheckTimer.unref();
   };
 
-  /**
-   * Stops the background check if it's running
-   */
+  /** Stops the background check if it's running */
   readonly stopBackgroundCheck = (): void => {
-    if (this.backgroundCheckTimer) {
-      clearTimeout(this.backgroundCheckTimer);
-      this.backgroundCheckTimer = null;
+    if (!this.backgroundCheckTimer) {
+      return;
     }
+
+    clearTimeout(this.backgroundCheckTimer);
+    this.backgroundCheckTimer = undefined;
   };
 
-  /** to be used as `using medicus = new Medicus()` */
-  [Symbol.dispose]() {
-    this.stopBackgroundCheck();
-  }
+  // to be used as `using medicus = new Medicus()`
+  readonly [Symbol.dispose] = this.stopBackgroundCheck;
 }

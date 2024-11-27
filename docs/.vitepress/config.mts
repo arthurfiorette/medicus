@@ -16,10 +16,12 @@ export default defineConfig({
   markdown: {
     lineNumbers: true,
     typographer: true,
+
     theme: {
       dark: 'everforest-dark',
       light: 'everforest-light'
     },
+
     codeTransformers: [
       transformerTwoslash({
         jsdoc: true,

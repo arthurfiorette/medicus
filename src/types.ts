@@ -26,6 +26,15 @@ export interface DetailedHealthCheck {
   debug?: Record<string, number | boolean | string>;
 }
 
+/**
+ * A listener function that will be called whenever a background check is performed
+ * and a new result is available
+ */
+export type BackgroundCheckListener = (
+  this: void,
+  result: HealthCheckResult
+) => void | Promise<void>;
+
 export interface HealthCheckResult {
   /** The status of the health check */
   status: HealthStatus;
@@ -91,5 +100,5 @@ export interface MedicusOption<Ctx = void> {
    * systems, they must manually push the result into another API in form of a cron-job or
    * heartbeat mechanism.
    */
-  onBackgroundCheck?: (result: HealthCheckResult) => void | Promise<void>;
+  onBackgroundCheck?: BackgroundCheckListener;
 }

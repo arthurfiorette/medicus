@@ -35,13 +35,11 @@ describe('avvioMedicusPlugin()', () => {
     app.use(async (instance) => {
       run++;
       assert.ok(instance.medicus instanceof Medicus);
-      assert.equal(instance.medicus.options.backgroundCheckInterval, 1234);
     });
 
     app.use((instance, _, done) => {
       run++;
       assert.ok(instance.medicus instanceof Medicus);
-      assert.equal(instance.medicus.options.backgroundCheckInterval, 1234);
       return done();
     });
 
