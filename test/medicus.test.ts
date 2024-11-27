@@ -134,7 +134,7 @@ describe('Medicus', () => {
   });
 
   it('throws on adding two checkers with the same name', () => {
-    using medicus = new Medicus();
+    using medicus = new Medicus({});
 
     medicus.addChecker({ checker() {} });
 
@@ -144,7 +144,7 @@ describe('Medicus', () => {
   });
 
   test('removes a checker at runtime by name', async () => {
-    using medicus = new Medicus();
+    using medicus = new Medicus({});
 
     medicus.addChecker({
       checker() {
@@ -174,7 +174,7 @@ describe('Medicus', () => {
   });
 
   it('returns lastCheck()', async () => {
-    using medicus = new Medicus();
+    using medicus = new Medicus({});
 
     assert.deepStrictEqual(medicus.getLastCheck(), null);
 
