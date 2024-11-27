@@ -1,3 +1,4 @@
+import internal from 'node:stream';
 import {
   type BackgroundCheckListener,
   type DetailedHealthCheck,
@@ -200,7 +201,12 @@ export class Medicus<Ctx = void> {
    * Starts the background check if it's not already running
    */
   readonly startBackgroundCheck = (interval: number) => {
-    if (this.backgroundCheckTimer) {
+    if (
+      // already running
+      this.backgroundCheckTimer ||
+      // invalid interval
+      interval < 0
+    ) {
       return;
     }
 
