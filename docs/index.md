@@ -74,27 +74,25 @@ const companies = [
 ];
 </script>
 
-<VPTeamPage>
-  <VPTeamPageTitle>
-    <template #title>Trusted by companies</template>
-    <template #lead>Medicus is proudly powering a large ecosystem of organizations and products worldwide.</template>
-  </VPTeamPageTitle>
+<VPTeamPageTitle>
+  <template #title>Trusted by companies</template>
+  <template #lead>Medicus is proudly powering a large ecosystem of organizations and products worldwide.</template>
+</VPTeamPageTitle>
 
-  <div id="trusted-by-wrapper">
-    <div id="trusted-by">
-      <template v-for="company in companies">
-        <a :href="company.link" :alt="company.name" target="_blank" :title="company.name">
-          <img :src="company.logo" :alt="`${company.name} logo`" />
-        </a>
-      </template>
-    </div>
-    <small id="small-text">
-      The logos displayed in this page are property of the respective organizations and they are not distributed under the same license as Medicus (MIT).
-      <br />
-      Want to be featured here? <a href="mailto:medicus@arthur.place">Mail us</a>!
-    </small>
+<div id="trusted-by-wrapper">
+  <div id="trusted-by">
+    <template v-for="company in companies">
+      <a :href="company.link" :alt="company.name" target="_blank" :title="company.name">
+        <img :src="company.logo" :alt="`${company.name} logo`" />
+      </a>
+    </template>
   </div>
-</VPTeamPage>
+  <small id="small-text">
+    The logos displayed in this page are property of the respective organizations and they are not distributed under the same license as Medicus (MIT).
+    <br />
+    Want to be featured here? <a href="mailto:medicus@arthur.place">Mail us</a>!
+  </small>
+</div>
 
 <!-- 
 ## Installation
