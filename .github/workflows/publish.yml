@@ -35,6 +35,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Generate files
+        run: pnpm run generate
+
       - name: Publish to NPM
         run: pnpm publish --access public --no-git-checks --provenance
         env:

@@ -14,19 +14,9 @@
   "sideEffects": false,
   "type": "commonjs",
   "main": "dist/index.js",
-  "files": [
-    "avvio.d.ts",
-    "avvio.js",
-    "fastify.d.ts",
-    "fastify.js",
-    "node.d.ts",
-    "node.js",
-    "dist",
-    "LICENSE",
-    "README.md"
-  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "generate": "node scripts/postbuild.js",
     "docs:build": "vitepress build docs",
     "docs:dev": "vitepress dev docs",
     "docs:preview": "vitepress preview docs",

@@ -2,3 +2,8 @@ dist
 node_modules
 coverage
 docs/.vitepress/cache
+
+# generated files
+/.npmignore
+/*.js
+/*.d.ts
