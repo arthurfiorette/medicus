@@ -138,47 +138,72 @@ export default defineConfig({
         ]
       },
       {
-        base: '/guides/',
-        text: 'Guides',
-        items: [
-          {
-            text: 'Non exposed services',
-            link: 'non-exposed-services.md'
-          },
-          {
-            text: 'SQL Databases',
-            link: 'sql-databases.md'
-          },
-          {
-            text: 'Redis',
-            link: 'redis.md'
-          }
-        ]
-      },
-      {
         base: '/integrations/',
         text: 'Integrations',
         link: 'index.md',
-        items: [
+        items: mapSideItems([
           {
             text: 'Node',
-            link: 'node.md'
+            link: 'node.md',
+            todo: true
           },
           {
             text: 'Fastify',
-            link: 'fastify.md'
+            link: 'fastify.md',
+            todo: true
           },
           {
             text: 'Avvio',
-            link: 'avvio.md'
+            link: 'avvio.md',
+            todo: true
           },
           {
             text: 'Open Telemetry',
-            link: 'open-telemetry.md'
+            link: 'open-telemetry.md',
+            todo: true
           }
-        ]
+        ])
+      },
+      {
+        base: '/guides/',
+        text: 'Guides',
+        items: mapSideItems([
+          {
+            text: 'Non exposed services',
+            link: 'non-exposed-services.md',
+            todo: true
+          },
+          {
+            text: 'SQL Databases',
+            link: 'sql-databases.md',
+            todo: true
+          },
+          {
+            text: 'Redis',
+            link: 'redis.md',
+            todo: true
+          }
+        ])
       }
     ]
   },
   head: [['link', { rel: 'icon', href: '/medicus.svg', type: 'image/x-icon' }]]
 });
+
+function mapSideItems(items: { link?: string; text: string; todo?: boolean }[]) {
+  return (
+    items
+      .map((item) => {
+        if (item.todo) {
+          item.text = `🚧 ${item.text}`;
+          item.link = '../../../../todo.md';
+        }
+
+        return item;
+      })
+      // alphabetical
+      .sort((a, b) => a.text.localeCompare(b.text, 'en', { sensitivity: 'base' }))
+      // done first
+      .sort((a, b) => (a.todo === b.todo ? 0 : a.todo ? 1 : -1))
+  );
+}
