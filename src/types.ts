@@ -1,5 +1,8 @@
 import type { Medicus } from './medicus';
 
+/** @internal */
+export const kMedicusPlugin = Symbol.for('medicus.plugin');
+
 /**
  * A enum representing the status of a health check, can be either `HEALTHY`, `DEGRADED`
  * or `UNHEALTHY`
@@ -66,7 +69,43 @@ export type HealthCheckerMap<Ctx> = {
   [name: string]: HealthChecker<Ctx>;
 };
 
-export interface MedicusOption<Ctx = void> {
+/**
+ * A plugin that can be used to extend the functionality of the medicus instance
+ */
+export interface MedicusPlugin<Ctx = void> {
+  /** List of checkers to automatically add to the medicus instance */
+  checkers?: HealthCheckerMap<Ctx>;
+
+  /**
+   * Called to resolve the final {@linkcode BaseMedicusOption} object
+   */
+  configure?(options: BaseMedicusOption<Ctx>): void;
+
+  /**
+   * Called when the medicus instance is created
+   */
+  created?(medicus: Medicus<Ctx>): void;
+}
+
+/**
+ * A factory function that creates a {@linkcode MedicusPlugin} object
+ * to be used by the medicus constructor
+ */
+export type MedicusPluginFactory<O, BaseCtx = void> = <Ctx extends BaseCtx>(
+  options: O
+) => MedicusPlugin<Ctx>;
+
+/**
+ * This interface is the one used by `Medicus` constructor
+ */
+export interface MedicusOption<Ctx = void> extends BaseMedicusOption<Ctx> {
+  /**
+   * A list of plugins to be used by the medicus instance
+   */
+  plugins?: MedicusPlugin<Ctx>[];
+}
+
+export interface BaseMedicusOption<Ctx = void> {
   /** List of checkers to automatically add to the medicus instance */
   checkers?: HealthCheckerMap<Ctx>;
 

@@ -10,18 +10,14 @@ type BasePinoLogger = {
   };
 };
 
-/**
- * Factory to create a MedicusErrorLogger from a pino logger
- */
+// TODO: Remover esse cara em favor do plugin
 export function pinoToErrorLogger(logger: BasePinoLogger): MedicusErrorLogger {
   return (error, checkerName) => {
     return logger.error(error, `Health check failed for ${checkerName}`);
   };
 }
 
-/**
- * Simple factory to create a MedicusErrorLogger from a `console.error`-like function
- */
+// TODO: Colocar esse logger como padrão.
 export function consoleToErrorLogger(logger: Console['error'] = console.error): MedicusErrorLogger {
   return (error, checkerName) => {
     return logger(`Health check failed for ${checkerName}`, error);

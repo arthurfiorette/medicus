@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test, { describe, it } from 'node:test';
 import { setTimeout } from 'node:timers/promises';
-import { HealthStatus, Medicus } from '../src';
+import { HealthStatus, Medicus, definePlugin } from '../src';
 
 describe('Medicus', () => {
   it('returns healthy when no checkers are added', async () => {
@@ -301,5 +301,60 @@ describe('Medicus', () => {
     assert(loggedError !== null);
     assert(loggedError.error instanceof Error);
     assert.strictEqual(loggedError.checkerName, 'onBackgroundCheck');
+  });
+
+  it('tests all plugin options', async () => {
+    const plugin = definePlugin<void>(() => ({
+      name: 'test',
+      checkers: {
+        pluginChecker() {
+          return HealthStatus.HEALTHY;
+        }
+      },
+      configure(options) {
+        options.checkers = {
+          ...options.checkers,
+          configuredChecker() {
+            return HealthStatus.HEALTHY;
+          }
+        };
+      },
+      created(medicus) {
+        medicus.addChecker({
+          createdChecker() {
+            return HealthStatus.HEALTHY;
+          }
+        });
+      }
+    }));
+
+    using medicus = new Medicus({
+      plugins: [plugin()],
+      checkers: {
+        rootChecker() {
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {
+        pluginChecker: {
+          status: HealthStatus.HEALTHY
+        },
+        configuredChecker: {
+          status: HealthStatus.HEALTHY
+        },
+        createdChecker: {
+          status: HealthStatus.HEALTHY
+        },
+        rootChecker: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
   });
 });

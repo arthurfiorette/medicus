@@ -17,6 +17,8 @@ const medicus = new Medicus({
 
 ## Built-in Error Loggers
 
+<!-- TODO:  Trocar essa parte para falar que o logger built in é o console.error e criar um link para o plugin do pino -->
+
 Medicus includes two ready-to-use error logger factories for seamless integration with popular logging solutions:
 
 ### Pino

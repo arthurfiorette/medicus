@@ -1,12 +1,12 @@
 import type avvio from 'avvio';
 import { Medicus } from '../medicus';
-import type { MedicusOption } from '../types';
+import type { BaseMedicusOption } from '../types';
 
 /** The medicus type alias with its context adapted to avvio */
 export type AvvioMedicus<Ctx> = Medicus<avvio.mixedInstance<Ctx>>;
 
 /** The options type alias for the avvio medicus plugin */
-export type AvvioMedicusOptions<Ctx> = MedicusOption<avvio.mixedInstance<Ctx>>;
+export type AvvioMedicusOptions<Ctx> = BaseMedicusOption<avvio.mixedInstance<Ctx>>;
 
 /**
  * A basic avvio plugin that registers a medicus instance
@@ -29,7 +29,7 @@ export type AvvioMedicusOptions<Ctx> = MedicusOption<avvio.mixedInstance<Ctx>>;
  * ```
  */
 export function avvioMedicusPlugin<Ctx extends { medicus: AvvioMedicus<Ctx> }>(
-  options: Omit<MedicusOption<Ctx>, 'context'>
+  options: Omit<BaseMedicusOption<Ctx>, 'context'>
 ) {
   // I could not manage to make avvio typings work, totally skill issue on my part
   return function medicusPlugin(

@@ -134,6 +134,10 @@ export default defineConfig({
           {
             text: 'Background Checks',
             link: 'background-checks.md'
+          },
+          {
+            text: 'Plugins',
+            link: 'plugins.md'
           }
         ]
       },
@@ -160,6 +164,11 @@ export default defineConfig({
           {
             text: 'Open Telemetry',
             link: 'open-telemetry.md',
+            todo: true
+          },
+          {
+            text: 'Pino',
+            link: 'pino.md',
             todo: true
           }
         ])

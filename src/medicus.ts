@@ -76,6 +76,15 @@ export class Medicus<Ctx = void> {
   public onBackgroundCheck: BackgroundCheckListener | undefined;
 
   constructor(options: MedicusOption<Ctx> = {}) {
+    // Configure the instance with the provided options
+    if (options.plugins) {
+      for (const plugin of options.plugins) {
+        if (plugin.configure) {
+          plugin.configure(options);
+        }
+      }
+    }
+
     if (options.context) {
       this.context = options.context;
     }
@@ -88,12 +97,30 @@ export class Medicus<Ctx = void> {
       this.onBackgroundCheck = options.onBackgroundCheck;
     }
 
+    // adds before userland checkers
+    if (options.plugins) {
+      for (const plugin of options.plugins) {
+        if (plugin.checkers) {
+          this.addChecker(plugin.checkers);
+        }
+      }
+    }
+
     if (options.checkers) {
       this.addChecker(options.checkers);
     }
 
     if (options.backgroundCheckInterval) {
       this.startBackgroundCheck(options.backgroundCheckInterval);
+    }
+
+    // post hook once everything is set up
+    if (options.plugins) {
+      for (const plugin of options.plugins) {
+        if (plugin.created) {
+          plugin.created(this);
+        }
+      }
     }
   }
 
@@ -111,6 +138,11 @@ export class Medicus<Ctx = void> {
   /** Returns an read-only iterator of all the checkers */
   listCheckers(): MapIterator<HealthChecker<Ctx>> {
     return this.checkers.values();
+  }
+
+  /** Returns an read-only iterator of all the checkers and their names */
+  listCheckersEntries(): MapIterator<[string, HealthChecker<Ctx>]> {
+    return this.checkers.entries();
   }
 
   /**
