@@ -6,12 +6,12 @@ export interface NodePluginOptions {
   /**
    * The name of the checker
    *
-   * @default 'node
+   * @default 'node'
    */
   checkerName?: string;
 
   /**
-   * If true, the plugin will return some basic information about the system
+   * If true, the plugin will return some basic information about the  system
    * when the checker is called with the debug flag
    *
    * @default true

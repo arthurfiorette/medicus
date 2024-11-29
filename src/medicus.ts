@@ -91,6 +91,10 @@ export class Medicus<Ctx = void> {
 
     if (options.errorLogger) {
       this.errorLogger = options.errorLogger;
+    } else {
+      this.errorLogger = (error, checkerName) => {
+        return console.error(`Health check failed for ${checkerName}`, error);
+      };
     }
 
     if (options.onBackgroundCheck) {
