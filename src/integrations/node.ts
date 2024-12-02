@@ -23,7 +23,8 @@ export interface NodePluginOptions {
  * A simple `MedicusPlugin` that adds a checker to check the health of the nodejs process
  * and returns some basic information about the system
  */
-export const nodeMedicusPlugin = definePlugin<NodePluginOptions | undefined>(
+// biome-ignore lint/suspicious/noConfusingVoidType: biome will use undefined instead of void, but we need void here to make the param optional
+export const nodeMedicusPlugin = definePlugin<NodePluginOptions | void>(
   ({ checkerName = 'node', debug = true } = {}) => ({
     checkers: {
       [checkerName]: !debug
