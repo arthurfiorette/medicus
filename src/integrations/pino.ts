@@ -1,4 +1,5 @@
 import type { BaseLogger } from 'pino';
+import {} from 'pino';
 import { definePlugin } from '../plugins';
 
 /**

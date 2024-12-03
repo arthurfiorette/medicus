@@ -8,11 +8,32 @@ The `errorLogger` is invoked with the error and the name of the checker where it
 import { Medicus } from 'medicus';
 
 const medicus = new Medicus({
-  errorLogger: console.error // default implementation
+  // Your custom error handling implementation
+  errorLogger(error, checkerName) {
+    console.log('Service check failed:', checkerName, error);
+  }
 });
 ```
 
-## Plugins
+## Default Error Logger
+
+If no custom error logger is provided, Medicus defaults to using console.error to log errors. This is a simple and effective way to see any issues directly in your console, but for production environments, you might want to replace it with a more robust logging solution.
+
+```ts
+import type { MedicusErrorLogger } from 'medicus';
+
+export const defaultErrorLogger: MedicusErrorLogger = (
+  error,
+  checkerName
+) => {
+  return console.error(
+    `Health check failed for ${checkerName}`,
+    error
+  );
+};
+```
+
+## Integrations
 
 ### Pino
 

@@ -8,6 +8,7 @@ import {
   type MedicusErrorLogger,
   type MedicusOption
 } from './types';
+import { defaultErrorLogger } from './utils/logger';
 
 /**
  * **Medicus**
@@ -89,13 +90,7 @@ export class Medicus<Ctx = void> {
       this.context = options.context;
     }
 
-    if (options.errorLogger) {
-      this.errorLogger = options.errorLogger;
-    } else {
-      this.errorLogger = (error, checkerName) => {
-        return console.error(`Health check failed for ${checkerName}`, error);
-      };
-    }
+    this.errorLogger = options.errorLogger || defaultErrorLogger;
 
     if (options.onBackgroundCheck) {
       this.onBackgroundCheck = options.onBackgroundCheck;
