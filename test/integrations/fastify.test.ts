@@ -2,12 +2,12 @@ import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import fastify, { type FastifyInstance } from 'fastify';
 import { HealthStatus, Medicus } from '../../src';
-import { medicusPlugin } from '../../src/integrations/fastify';
+import { fastifyMedicusPlugin } from '../../src/integrations/fastify';
 
 describe('medicusPlugin()', () => {
   it('registers a health check route', async () => {
     await using app = fastify();
-    await app.register(medicusPlugin);
+    await app.register(fastifyMedicusPlugin);
 
     assert.ok(app.medicus instanceof Medicus);
 
@@ -27,7 +27,7 @@ describe('medicusPlugin()', () => {
 
     let last = false;
 
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       checkers: {
         async checker() {
           last = !last;
@@ -63,7 +63,7 @@ describe('medicusPlugin()', () => {
 
     let last = false;
 
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       checkers: {
         async checker() {
           last = !last;
@@ -97,7 +97,7 @@ describe('medicusPlugin()', () => {
   it('auto registers under-pressure checker', async () => {
     await using app = fastify();
     await app.register(import('@fastify/under-pressure'));
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       debug: true
     });
 
@@ -121,7 +121,7 @@ describe('medicusPlugin()', () => {
 
   it('works with per request debug', async () => {
     await using app = fastify();
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       checkers: {
         request() {
           return {
@@ -183,7 +183,7 @@ describe('medicusPlugin()', () => {
 
   it('adds fastify as context', async () => {
     await using app = fastify();
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       checkers: {
         checker(context: FastifyInstance) {
           assert.strictEqual(context, app);
@@ -210,7 +210,7 @@ describe('medicusPlugin()', () => {
 
   it('simulates different statuses', async () => {
     await using app = fastify();
-    await app.register(medicusPlugin, {
+    await app.register(fastifyMedicusPlugin, {
       debug: true,
       checkers: {
         checker() {
@@ -249,5 +249,43 @@ describe('medicusPlugin()', () => {
         }
       }
     });
+  });
+
+  it('replies with different status codes for each status', async () => {
+    await using app = fastify();
+    await app.register(fastifyMedicusPlugin, {
+      checkers: {
+        checker() {
+          return HealthStatus.UNHEALTHY;
+        }
+      }
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health'
+    });
+
+    assert.strictEqual(response.statusCode, 503);
+
+    const response2 = await app.inject({
+      method: 'GET',
+      url: '/health',
+      query: {
+        simulate: HealthStatus.DEGRADED
+      }
+    });
+
+    assert.strictEqual(response2.statusCode, 429);
+
+    const response3 = await app.inject({
+      method: 'GET',
+      url: '/health',
+      query: {
+        simulate: HealthStatus.HEALTHY
+      }
+    });
+
+    assert.strictEqual(response3.statusCode, 200);
   });
 });

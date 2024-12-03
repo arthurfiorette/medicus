@@ -1,55 +1,45 @@
 # Error Logger
 
-Medicus provides robust support for handling errors that occur during health checks. Whether an error is thrown in an **automatic background check** or during a **manual check**, you can configure an `errorLogger` function to handle these errors effectively.
+Medicus provides robust support for managing errors during health checks. Whether the error occurs in an **automatic background check** or during a **manual check**, you can configure a custom `errorLogger` function to centralize and customize error handling for your system.
 
-The `errorLogger` is invoked with the error and the name of the checker where it occurred, allowing you to centralize and customize error handling for your system.
+## Custom Error Logger
+
+The `errorLogger` is a configurable function that receives the error and the name of the checker where it occurred. This makes it easy to integrate your logging solution and ensure consistent error tracking.
 
 ```ts
 import { Medicus } from 'medicus';
 
 const medicus = new Medicus({
-  // Your custom error handling implementation
+  // Custom error handling implementation
   errorLogger(error, checkerName) {
-    console.log('Service check failed:', checkerName, error);
+    console.log('Health check failed:', checkerName, error);
   }
 });
 ```
 
-## Built-in Error Loggers
+## Default Error Logger
 
-Medicus includes two ready-to-use error logger factories for seamless integration with popular logging solutions:
+If no custom error logger is provided, Medicus uses a default implementation based on `console.error`. This is straightforward and sufficient for development environments but can be replaced with a more robust solution for production.
+
+```ts
+import type { MedicusErrorLogger } from 'medicus';
+
+export const defaultErrorLogger: MedicusErrorLogger = (
+  error,
+  checkerName
+) => {
+  console.error(`Health check failed for ${checkerName}`, error);
+};
+```
+
+## Integrations
 
 ### Pino
 
-If you’re using [Pino](https://getpino.io/) for logging, the `pinoToErrorLogger` function maps errors directly to your Pino instance.
-
-```ts
-import { Utils, Medicus } from 'medicus';
-
-// Replace with your actual Pino instance
-let myPinoInstance!: any;
-
-const medicus = new Medicus({
-  // Maps errors to the Pino logger
-  errorLogger: Utils.pinoToErrorLogger(myPinoInstance)
-});
-```
-
-### Console
-
-For applications without a dedicated logger, you can use the `consoleErrorLogger` function, which logs errors to the console (defaulting to `console.error`).
-
-```ts
-import { Utils, Medicus } from 'medicus';
-
-const medicus = new Medicus({
-  // Logs errors to the console
-  errorLogger: Utils.consoleToErrorLogger()
-});
-```
+Medicus supports integration with [Pino](./integrations/pino.md), a high-performance JSON logger, allowing you to easily use Pino as your error logger.
 
 ## Custom Integrations
 
-Need a different error logger or use a custom logging solution? Medicus makes it easy to add your own integration.
+Do you need to integrate another logging tool or a custom solution? Medicus is designed to be flexible, letting you add your own error logger with ease.
 
-Want to share your implementation? [Open a PR](https://github.com/arthurfiorette/medicus/pulls) to contribute it to Medicus!
+Have a great implementation you'd like to share? [Contribute to Medicus](https://github.com/arthurfiorette/medicus/pulls) by opening a pull request!

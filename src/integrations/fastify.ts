@@ -4,8 +4,8 @@ import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
 import { AllSchemas, HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
-import { pinoToErrorLogger } from '../utils';
 import { HttpStatuses, healthStatusToHttpStatus } from '../utils/http';
+import { pinoMedicusPlugin } from './pino';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -34,6 +34,13 @@ export type FastifyMedicsPluginOptions = Omit<
    * @default false
    */
   debug?: DebugDetector;
+
+  /**
+   * The name of the pressure checker to use when @fastify/under-pressure is used
+   *
+   * @default 'pressure'
+   */
+  pressureCheckerName?: string;
 };
 
 /**
@@ -42,7 +49,7 @@ export type FastifyMedicsPluginOptions = Omit<
  * @example
  *
  * ```ts
- * app.register(medicusPlugin, {
+ * app.register(fastifyMedicusPlugin, {
  *   checkers: {
  *     db() {
  *       return true;
@@ -51,23 +58,28 @@ export type FastifyMedicsPluginOptions = Omit<
  * });
  * ```
  */
-export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
-  async (fastify, { route, debug = false, ...medicusOptions }) => {
+export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
+  async (
+    fastify,
+    { route, debug = false, pressureCheckerName = 'pressure', ...medicusOptions }
+  ) => {
+    // Adds fastify error logger
+    medicusOptions.plugins ??= [];
+    medicusOptions.plugins.push(pinoMedicusPlugin(fastify.log));
+
     fastify.decorate(
       'medicus',
       new Medicus({
         ...medicusOptions,
         // auto inject context
-        context: fastify,
-        // logs to fastify logger
-        errorLogger: pinoToErrorLogger(fastify.log)
+        context: fastify
       })
     );
 
     // @fastify/under-pressure plugin support
     if (fastify.hasPlugin('@fastify/under-pressure')) {
       fastify.medicus.addChecker({
-        async pressure() {
+        async [pressureCheckerName]() {
           return {
             //@ts-ignore - only if @fastify/under-pressure is used
             status: fastify.isUnderPressure() ? HealthStatus.DEGRADED : HealthStatus.HEALTHY,
@@ -120,11 +132,11 @@ export const medicusPlugin = fp<FastifyMedicsPluginOptions>(
       }
     });
 
-    if (medicusOptions.backgroundCheckInterval) {
-      fastify.addHook('onClose', async function () {
-        this.medicus.stopBackgroundCheck();
-      });
-    }
+    // Clears the background check on close
+    fastify.addHook('onClose', function (_, done) {
+      this.medicus.stopBackgroundCheck();
+      return done();
+    });
   },
   {
     fastify: '5.x',

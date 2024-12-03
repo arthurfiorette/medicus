@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs';
+import ts from 'typescript';
 import { defineConfig } from 'vitepress';
 import { description, version } from '../../package.json';
 
@@ -26,13 +27,17 @@ export default defineConfig({
       transformerTwoslash({
         jsdoc: true,
         explicitTrigger: false,
+
         typesCache: createFileSystemTypesCache({
           dir: path.resolve('docs/.vitepress/cache/shiki')
         }),
+
         twoslashOptions: {
           compilerOptions: {
+            baseUrl: path.resolve('src'),
             paths: {
-              medicus: ['./src/index.ts']
+              medicus: ['./index.ts'],
+              'medicus/*': ['./integrations/*']
             },
             types: [path.resolve('docs/.vitepress/globals.d.ts')]
           }
@@ -134,24 +139,10 @@ export default defineConfig({
           {
             text: 'Background Checks',
             link: 'background-checks.md'
-          }
-        ]
-      },
-      {
-        base: '/guides/',
-        text: 'Guides',
-        items: [
-          {
-            text: 'Non exposed services',
-            link: 'non-exposed-services.md'
           },
           {
-            text: 'SQL Databases',
-            link: 'sql-databases.md'
-          },
-          {
-            text: 'Redis',
-            link: 'redis.md'
+            text: 'Plugins',
+            link: 'plugins.md'
           }
         ]
       },
@@ -159,10 +150,11 @@ export default defineConfig({
         base: '/integrations/',
         text: 'Integrations',
         link: 'index.md',
-        items: [
+        items: mapSideItems([
           {
             text: 'Node',
-            link: 'node.md'
+            link: 'node.md',
+            todo: true
           },
           {
             text: 'Fastify',
@@ -170,15 +162,60 @@ export default defineConfig({
           },
           {
             text: 'Avvio',
-            link: 'avvio.md'
+            link: 'avvio.md',
+            todo: true
           },
           {
             text: 'Open Telemetry',
-            link: 'open-telemetry.md'
+            link: 'open-telemetry.md',
+            todo: true
+          },
+          {
+            text: 'Pino',
+            link: 'pino.md'
           }
-        ]
+        ])
+      },
+      {
+        base: '/guides/',
+        text: 'Guides',
+        items: mapSideItems([
+          {
+            text: 'Non exposed services',
+            link: 'non-exposed-services.md',
+            todo: true
+          },
+          {
+            text: 'SQL Databases',
+            link: 'sql-databases.md',
+            todo: true
+          },
+          {
+            text: 'Redis',
+            link: 'redis.md',
+            todo: true
+          }
+        ])
       }
     ]
   },
   head: [['link', { rel: 'icon', href: '/medicus.svg', type: 'image/x-icon' }]]
 });
+
+function mapSideItems(items: { link?: string; text: string; todo?: boolean }[]) {
+  return (
+    items
+      .map((item) => {
+        if (item.todo) {
+          item.text = `🚧 ${item.text}`;
+          item.link = '../../../../todo.md';
+        }
+
+        return item;
+      })
+      // alphabetical
+      .sort((a, b) => a.text.localeCompare(b.text, 'en', { sensitivity: 'base' }))
+      // done first
+      .sort((a, b) => (a.todo === b.todo ? 0 : a.todo ? 1 : -1))
+  );
+}
