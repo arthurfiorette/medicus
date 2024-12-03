@@ -22,7 +22,7 @@ const medicus = new Medicus({
 If no custom error logger is provided, Medicus uses a default implementation based on `console.error`. This is straightforward and sufficient for development environments but can be replaced with a more robust solution for production.
 
 ```ts
-import type { MedicusErrorLogger } from 'medicus';
+import { MedicusErrorLogger } from 'medicus';
 
 export const defaultErrorLogger: MedicusErrorLogger = (
   error,
