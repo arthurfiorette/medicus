@@ -63,7 +63,9 @@ describe('Medicus', () => {
     });
   });
 
-  it('supports all kinds of returns', async () => {
+  it('supports all kinds of returns', async (ctx) => {
+    const mock = ctx.mock.method(console, 'error', () => {}, { times: 1 });
+
     using medicus = new Medicus({
       checkers: {
         returnsEnum() {
@@ -131,6 +133,8 @@ describe('Medicus', () => {
         }
       }
     });
+
+    assert.equal(mock.mock.callCount(), 1);
   });
 
   it('throws on adding two checkers with the same name', () => {
@@ -331,7 +335,7 @@ describe('Medicus', () => {
   it('calls errorLogger when onBackgroundCheck throws', async () => {
     let loggedError: any = null;
 
-    using _ = new Medicus({
+    using medicus = new Medicus({
       checkers: { success() {} },
       backgroundCheckInterval: 10,
       onBackgroundCheck() {
@@ -341,6 +345,11 @@ describe('Medicus', () => {
         loggedError = { error, checkerName };
       }
     });
+
+    // calling multiple times does nothing
+    medicus.startBackgroundCheck(10);
+    medicus.startBackgroundCheck(10);
+    medicus.startBackgroundCheck(10);
 
     await setTimeout(20);
 
@@ -447,5 +456,6 @@ describe('Medicus', () => {
     checkers = Array.from(medicus.listCheckers());
 
     assert.strictEqual(checkers.length, 3);
+    assert.strictEqual(medicus.countCheckers(), 3);
   });
 });

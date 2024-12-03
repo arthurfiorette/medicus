@@ -250,4 +250,42 @@ describe('medicusPlugin()', () => {
       }
     });
   });
+
+  it('replies with different status codes for each status', async () => {
+    await using app = fastify();
+    await app.register(fastifyMedicusPlugin, {
+      checkers: {
+        checker() {
+          return HealthStatus.UNHEALTHY;
+        }
+      }
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health'
+    });
+
+    assert.strictEqual(response.statusCode, 503);
+
+    const response2 = await app.inject({
+      method: 'GET',
+      url: '/health',
+      query: {
+        simulate: HealthStatus.DEGRADED
+      }
+    });
+
+    assert.strictEqual(response2.statusCode, 429);
+
+    const response3 = await app.inject({
+      method: 'GET',
+      url: '/health',
+      query: {
+        simulate: HealthStatus.HEALTHY
+      }
+    });
+
+    assert.strictEqual(response3.statusCode, 200);
+  });
 });

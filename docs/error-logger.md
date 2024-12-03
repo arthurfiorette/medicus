@@ -1,40 +1,45 @@
 # Error Logger
 
-Medicus provides robust support for handling errors that occur during health checks. Whether an error is thrown in an **automatic background check** or during a **manual check**, you can configure an `errorLogger` function to handle these errors effectively.
+Medicus provides robust support for managing errors during health checks. Whether the error occurs in an **automatic background check** or during a **manual check**, you can configure a custom `errorLogger` function to centralize and customize error handling for your system.
 
-The `errorLogger` is invoked with the error and the name of the checker where it occurred, allowing you to centralize and customize error handling for your system.
+## Custom Error Logger
+
+The `errorLogger` is a configurable function that receives the error and the name of the checker where it occurred. This makes it easy to integrate your logging solution and ensure consistent error tracking.
 
 ```ts
 import { Medicus } from 'medicus';
 
 const medicus = new Medicus({
-  // Your custom error handling implementation
+  // Custom error handling implementation
   errorLogger(error, checkerName) {
-    console.log('Service check failed:', checkerName, error);
+    console.log('Health check failed:', checkerName, error);
   }
 });
 ```
 
 ## Default Error Logger
 
-If no custom error logger is provided, Medicus defaults to using console.error to log errors. This is a simple and effective way to see any issues directly in your console, but for production environments, you might want to replace it with a more robust logging solution.
+If no custom error logger is provided, Medicus uses a default implementation based on `console.error`. This is straightforward and sufficient for development environments but can be replaced with a more robust solution for production.
 
 ```ts
-import { Medicus } from 'medicus';
+import { MedicusErrorLogger } from 'medicus';
 
-const medicus = new Medicus({
-  // No logger provided, logs errors to the console
-});
+export const defaultErrorLogger: MedicusErrorLogger = (
+  error,
+  checkerName
+) => {
+  console.error(`Health check failed for ${checkerName}`, error);
+};
 ```
 
-## Plugins
+## Integrations
 
 ### Pino
 
-Medicus provides a built-in custom [Pino plugin](/integrations/pino) to help you easily integrate Pino as your error logger.
+Medicus supports integration with [Pino](./integrations/pino.md), a high-performance JSON logger, allowing you to easily use Pino as your error logger.
 
 ## Custom Integrations
 
-Need a different error logger or use a custom logging solution? Medicus makes it easy to add your own integration.
+Do you need to integrate another logging tool or a custom solution? Medicus is designed to be flexible, letting you add your own error logger with ease.
 
-Want to share your implementation? [Open a PR](https://github.com/arthurfiorette/medicus/pulls) to contribute it to Medicus!
+Have a great implementation you'd like to share? [Contribute to Medicus](https://github.com/arthurfiorette/medicus/pulls) by opening a pull request!

@@ -49,7 +49,7 @@ export interface HealthCheckResult {
 /** A health check function that can be used to check if a part of the system is healthy */
 export type HealthChecker<Ctx = void> = (
   this: void,
-  ctx: Readonly<Ctx>
+  ctx: Ctx
 ) =>
   | void
   | HealthStatus

@@ -29,7 +29,7 @@ export type AvvioMedicusOptions<Ctx> = BaseMedicusOption<avvio.mixedInstance<Ctx
  * ```
  */
 export function avvioMedicusPlugin<Ctx extends { medicus: AvvioMedicus<Ctx> }>(
-  options: Omit<BaseMedicusOption<Ctx>, 'context'>
+  options: Omit<AvvioMedicusOptions<Ctx>, 'context'>
 ) {
   // I could not manage to make avvio typings work, totally skill issue on my part
   return function medicusPlugin(

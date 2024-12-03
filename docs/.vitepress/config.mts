@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs';
+import ts from 'typescript';
 import { defineConfig } from 'vitepress';
 import { description, version } from '../../package.json';
 
@@ -14,7 +15,6 @@ export default defineConfig({
   lastUpdated: true,
 
   markdown: {
-    lineNumbers: true,
     typographer: true,
 
     theme: {
@@ -26,13 +26,17 @@ export default defineConfig({
       transformerTwoslash({
         jsdoc: true,
         explicitTrigger: false,
+
         typesCache: createFileSystemTypesCache({
           dir: path.resolve('docs/.vitepress/cache/shiki')
         }),
+
         twoslashOptions: {
           compilerOptions: {
+            baseUrl: path.resolve('src'),
             paths: {
-              medicus: ['./src/index.ts']
+              medicus: ['./index.ts'],
+              'medicus/*': ['./integrations/*']
             },
             types: [path.resolve('docs/.vitepress/globals.d.ts')]
           }
@@ -63,11 +67,6 @@ export default defineConfig({
         noIcon: true
       },
       {
-        text: '',
-        link: '#',
-        noIcon: true
-      },
-      {
         text: 'Get started',
         link: 'get-started.md'
       },
@@ -79,12 +78,12 @@ export default defineConfig({
         text: version,
         items: [
           {
-            text: 'Changelog',
+            text: 'Releases',
             link: 'https://github.com/arthurfiorette/medicus/releases'
           },
           {
-            text: 'Versions',
-            link: 'https://npmjs.com/package/medicus?activeTab=versions'
+            text: 'Issues',
+            link: 'https://github.com/arthurfiorette/medicus/issues'
           }
         ]
       }
@@ -168,8 +167,7 @@ export default defineConfig({
           },
           {
             text: 'Pino',
-            link: 'pino.md',
-            todo: true
+            link: 'pino.md'
           }
         ])
       },
