@@ -1,13 +1,24 @@
-name: Code CI
+name: Code CI and deploy Docs
 
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
 
 jobs:
   build:
     name: Build and test code
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -33,3 +44,18 @@ jobs:
 
       - name: Build code
         run: pnpm build
+
+      # Building docs ensures documentation is fixed on each code change
+      - name: Build docs
+        run: pnpm docs:build
+
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs/.vitepress/dist'
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        id: deployment
+        uses: actions/deploy-pages@v4
