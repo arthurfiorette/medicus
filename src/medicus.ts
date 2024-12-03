@@ -20,7 +20,6 @@ import { defaultErrorLogger } from './utils/logger';
  *
  * @example
  *
- * ```ts
  * import { Medicus, HealthStatus } from 'medicus';
  *
  * const medicus = new Medicus();
@@ -46,7 +45,6 @@ import { defaultErrorLogger } from './utils/logger';
  * //     cache: { status: 'UNHEALTHY' }
  * //   }
  * // }
- * ```
  */
 export class Medicus<Ctx = void> {
   /** The interval id of the background check if it's running */
