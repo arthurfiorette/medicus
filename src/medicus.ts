@@ -8,6 +8,7 @@ import {
   type MedicusErrorLogger,
   type MedicusOption
 } from './types';
+import { defaultErrorLogger } from './utils/logger';
 
 /**
  * **Medicus**
@@ -19,7 +20,6 @@ import {
  *
  * @example
  *
- * ```ts
  * import { Medicus, HealthStatus } from 'medicus';
  *
  * const medicus = new Medicus();
@@ -45,7 +45,6 @@ import {
  * //     cache: { status: 'UNHEALTHY' }
  * //   }
  * // }
- * ```
  */
 export class Medicus<Ctx = void> {
   /** The interval id of the background check if it's running */
@@ -89,13 +88,7 @@ export class Medicus<Ctx = void> {
       this.context = options.context;
     }
 
-    if (options.errorLogger) {
-      this.errorLogger = options.errorLogger;
-    } else {
-      this.errorLogger = (error, checkerName) => {
-        return console.error(`Health check failed for ${checkerName}`, error);
-      };
-    }
+    this.errorLogger = options.errorLogger || defaultErrorLogger;
 
     if (options.onBackgroundCheck) {
       this.onBackgroundCheck = options.onBackgroundCheck;
@@ -142,6 +135,11 @@ export class Medicus<Ctx = void> {
   /** Returns an read-only iterator of all the checkers */
   listCheckers(): MapIterator<HealthChecker<Ctx>> {
     return this.checkers.values();
+  }
+
+  /** Returns an read-only iterator of all the checkers */
+  countCheckers(): number {
+    return this.checkers.size;
   }
 
   /** Returns an read-only iterator of all the checkers and their names */

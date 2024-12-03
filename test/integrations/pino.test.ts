@@ -7,7 +7,6 @@ import { pinoMedicusPlugin } from '../../src/integrations/pino';
 describe('pinoMedicusPlugin', () => {
   it('should call pino.error when health check fails', async (ctx) => {
     const pinoInstance = pino({ level: 'silent' });
-
     const pinoMock = ctx.mock.method(pinoInstance, 'error');
 
     const medicus = new Medicus({
