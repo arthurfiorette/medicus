@@ -173,6 +173,31 @@ describe('Medicus', () => {
     });
   });
 
+  test('removeChecker returns false when an non existing checker name is provided', async () => {
+    using medicus = new Medicus({});
+
+    medicus.addChecker({
+      checker() {
+        return HealthStatus.HEALTHY;
+      }
+    });
+
+    const removed = medicus.removeChecker('invalid');
+
+    assert.deepStrictEqual(removed, false);
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {
+        checker: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
+  });
+
   it('returns lastCheck()', async () => {
     using medicus = new Medicus({});
 
@@ -282,6 +307,27 @@ describe('Medicus', () => {
     assert.deepStrictEqual(param, medicus.getLastCheck(true));
   });
 
+  it('does not call onBackgroundCheck if an invalid interval is set', async () => {
+    let onBackgroundCheckCalled = false;
+    let param: any;
+
+    using medicus = new Medicus({
+      checkers: { success() {} },
+      backgroundCheckInterval: 0,
+      onBackgroundCheck(p) {
+        param = p;
+        onBackgroundCheckCalled = true;
+      }
+    });
+
+    assert.equal(medicus.getLastCheck(), null);
+
+    await setTimeout(10);
+
+    assert.equal(onBackgroundCheckCalled, false);
+    assert.equal(param, undefined);
+  });
+
   it('calls errorLogger when onBackgroundCheck throws', async () => {
     let loggedError: any = null;
 
@@ -356,5 +402,50 @@ describe('Medicus', () => {
         }
       }
     });
+  });
+
+  test('list all checkers', async () => {
+    const plugin = definePlugin<void>(() => ({
+      name: 'test',
+      checkers: {
+        pluginChecker() {
+          return HealthStatus.HEALTHY;
+        }
+      },
+      configure(options) {
+        options.checkers = {
+          ...options.checkers,
+          configuredChecker() {
+            return HealthStatus.HEALTHY;
+          }
+        };
+      },
+      created(medicus) {
+        medicus.addChecker({
+          createdChecker() {
+            return HealthStatus.HEALTHY;
+          }
+        });
+      }
+    }));
+
+    using medicus = new Medicus({
+      plugins: [plugin()],
+      checkers: {
+        rootChecker() {
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    let checkers = Array.from(medicus.listCheckers());
+
+    assert.strictEqual(checkers.length, 4);
+
+    medicus.removeChecker('rootChecker');
+
+    checkers = Array.from(medicus.listCheckers());
+
+    assert.strictEqual(checkers.length, 3);
   });
 });
