@@ -68,11 +68,6 @@ export default defineConfig({
         noIcon: true
       },
       {
-        text: '',
-        link: '#',
-        noIcon: true
-      },
-      {
         text: 'Get started',
         link: 'get-started.md'
       },
