@@ -11,13 +11,17 @@ import { fastifyMedicusPlugin } from 'medicus/fastify.js';
 const app = fastify();
 
 // Register Medicus plugin
-app.register(fastifyMedicusPlugin);
+app.register(fastifyMedicusPlugin, {
+  // custom options
+  url: '/my-custom-route',
+  method: 'PUT'
+});
 
 // The health check route is automatically set up
 app.listen({ port: 3000 });
 ```
 
-Once registered, the health check route will be available at `http://localhost:3000/health`.
+Once registered, the health check route will be available at `http://localhost:3000/my-custom-route` instead of the default `/health` route.
 
 Additionally, the `app.medicus` object is exposed, allowing you to interact directly with the Medicus instance for custom health check logic.
 
