@@ -11,7 +11,13 @@
   },
   "license": "MIT",
   "author": "Arthur Fiorette <me@arthur.place>",
-  "contributors": ["Alvseven <alv7contato@outlook.com>"],
+  "contributors": [
+    {
+      "name": "Gabriel Alves",
+      "email": "alv7contato@outlook.com",
+      "url": "https://alvseven.com"
+    }
+  ],
   "sideEffects": false,
   "type": "commonjs",
   "main": "dist/index.js",
