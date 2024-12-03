@@ -6,7 +6,7 @@ import { definePlugin } from '../plugins';
  */
 export const pinoMedicusPlugin = definePlugin<BaseLogger>((pino) => ({
   configure(options) {
-    options.errorLogger = (error: any, checkerName) => {
+    options.errorLogger = function pinoErrorLogger(error: any, checkerName) {
       return pino.error(error, `Health check failed for ${checkerName}`);
     };
   }
