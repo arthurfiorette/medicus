@@ -137,6 +137,11 @@ export class Medicus<Ctx = void> {
     return this.checkers.values();
   }
 
+  /** Returns an read-only iterator of all the checkers */
+  countCheckers(): number {
+    return this.checkers.size;
+  }
+
   /** Returns an read-only iterator of all the checkers and their names */
   listCheckersEntries(): MapIterator<[string, HealthChecker<Ctx>]> {
     return this.checkers.entries();

@@ -456,5 +456,6 @@ describe('Medicus', () => {
     checkers = Array.from(medicus.listCheckers());
 
     assert.strictEqual(checkers.length, 3);
+    assert.strictEqual(medicus.countCheckers(), 3);
   });
 });
