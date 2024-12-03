@@ -1,8 +1,8 @@
-# Fastify <Badge type="warning" text="Third-Party"  />
+# Fastify <Badge type="warning" text="Third-Party" />
 
-Fastify is a web framework for Node.js that is focused on providing the best developer experience with the least overhead and a powerful plugin architecture.
+Fastify is a high-performance web framework for Node.js, designed to offer an exceptional developer experience with minimal overhead and a robust plugin architecture.
 
-You can attach Medicus to your Fastify instance lifecycle hooks using the `fastifyMedicusPlugin`.
+You can integrate Medicus with your Fastify application by attaching it to your instance's lifecycle hooks using the `fastifyMedicusPlugin`:
 
 ```ts
 import fastify from 'fastify';
@@ -10,14 +10,15 @@ import { fastifyMedicusPlugin } from 'medicus/fastify.js';
 
 const app = fastify();
 
+// Register Medicus plugin
 app.register(fastifyMedicusPlugin);
 
-// Health check route is automatically registered
+// The health check route is automatically set up
 app.listen({ port: 3000 });
 ```
 
-Later, you can access the health check route at `http://localhost:3000/health`.
+Once registered, the health check route will be available at `http://localhost:3000/health`.
 
-`app.medicus` is available to you to interact with the Medicus instance.
+Additionally, the `app.medicus` object is exposed, allowing you to interact directly with the Medicus instance for custom health check logic.
 
-To read more about Fastify, check out the [Fastify documentation](https://www.fastify.io/).
+For more details about Fastify, visit the [Fastify documentation](https://www.fastify.io/).

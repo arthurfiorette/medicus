@@ -1,8 +1,8 @@
 # Pino
 
-Pino is a high-performance JSON logger that works well in development and production environments and provides enhanced logging capabilities.
+Pino is a fast and lightweight JSON logger designed for both development and production environments. It offers structured logging with advanced features for enhanced debugging and monitoring.
 
-The `pinoMedicusPlugin` is a plugin that overrides the default error logger with Pino's structured logging and advanced features.
+The `pinoMedicusPlugin` allows you to integrate Pino into `Medicus`, replacing its default error logger with Pino's powerful logging capabilities.
 
 ```ts
 import { Medicus } from 'medicus';
@@ -11,10 +11,12 @@ import { pino } from 'pino';
 
 const pinoInstance = pino();
 
-// Uses pino as the error logger
+// Configure Medicus to use Pino for error logging
 const medicus = new Medicus({
   plugins: [pinoMedicusPlugin(pinoInstance)]
 });
 ```
 
-For more details about Pino, check out [Pino documentation](https://getpino.io)
+This integration ensures that all errors and diagnostic logs produced by `Medicus` are formatted and processed using Pino's structured logging.
+
+For additional details, visit the [Pino documentation](https://getpino.io).

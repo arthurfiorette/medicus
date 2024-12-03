@@ -1,18 +1,18 @@
 # Integrations
 
-There are two kinds of integrations in `Medicus`, you can use both to extend its functionality.
+`Medicus` offers two types of integrations, each designed to extend its functionality in unique ways.
 
 ## Plugins
 
-Used inside `Medicus`'s `plugins` options to extend its functionality according to that specific integration.
+Plugins are used within `Medicus`'s `plugins` configuration option to enhance its capabilities for specific integrations:
 
-- [Pino](./pino.md): Maps the error logger to `pino`
-- [Node.js](./node.md): Adds a `Node.js` health checker to measure the event loop lag
-- [Open telemetry](./open-telemetry.md): Adds support for `OpenTelemetry` to trace the health checks and failures
+- **[Pino](./pino.md):** Integrates with the `Pino` logger to map error logging effectively.
+- **[Node.js](./node.md):** Adds a `Node.js` health checker to monitor event loop lag and ensure runtime stability.
+- **[OpenTelemetry](./open-telemetry.md):** Enables `OpenTelemetry` support to trace health checks and capture failure diagnostics.
 
-## Third-party integrations
+## Third-Party Integrations
 
-Used in other libraries and frameworks that you can use to attach `Medicus` to them.
+These integrations allow you to seamlessly connect `Medicus` with external libraries and frameworks:
 
-- [Avvio](./avvio.md): Integrates `Medicus` with `Avvio` to start the health checks after the server is ready
-- [Fastify](./fastify.md): Attaches `Medicus` to your `fastify` instance lifecycle hooks
+- **[Avvio](./avvio.md):** Hooks `Medicus` into the `Avvio` lifecycle to initiate health checks after the server is ready.
+- **[Fastify](./fastify.md):** Attaches `Medicus` to `Fastify` instance lifecycle hooks for streamlined integration.
