@@ -84,12 +84,12 @@ export default defineConfig({
         text: version,
         items: [
           {
-            text: 'Changelog',
+            text: 'Releases',
             link: 'https://github.com/arthurfiorette/medicus/releases'
           },
           {
-            text: 'Versions',
-            link: 'https://npmjs.com/package/medicus?activeTab=versions'
+            text: 'Issues',
+            link: 'https://github.com/arthurfiorette/medicus/issues'
           }
         ]
       }
