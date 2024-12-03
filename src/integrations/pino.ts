@@ -1,8 +1,6 @@
 import type { BaseLogger } from 'pino';
 import { definePlugin } from '../plugins';
 
-// TODO: Documentar os plugins de forma geral e abrir uma sub sessão para o plugin do pino
-
 /**
  * Plugin to add pino logger as the `errorLogger` for `Medicus`.
  */

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs';
+import ts from 'typescript';
 import { defineConfig } from 'vitepress';
 import { description, version } from '../../package.json';
 
@@ -26,13 +27,17 @@ export default defineConfig({
       transformerTwoslash({
         jsdoc: true,
         explicitTrigger: false,
+
         typesCache: createFileSystemTypesCache({
           dir: path.resolve('docs/.vitepress/cache/shiki')
         }),
+
         twoslashOptions: {
           compilerOptions: {
+            baseUrl: path.resolve('src'),
             paths: {
-              medicus: ['./src/index.ts']
+              medicus: ['./index.ts'],
+              'medicus/*': ['./integrations/*']
             },
             types: [path.resolve('docs/.vitepress/globals.d.ts')]
           }
@@ -153,8 +158,7 @@ export default defineConfig({
           },
           {
             text: 'Fastify',
-            link: 'fastify.md',
-            todo: true
+            link: 'fastify.md'
           },
           {
             text: 'Avvio',
@@ -168,8 +172,7 @@ export default defineConfig({
           },
           {
             text: 'Pino',
-            link: 'pino.md',
-            todo: true
+            link: 'pino.md'
           }
         ])
       },
