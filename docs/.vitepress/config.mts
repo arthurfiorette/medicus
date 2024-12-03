@@ -15,7 +15,6 @@ export default defineConfig({
   lastUpdated: true,
 
   markdown: {
-    lineNumbers: true,
     typographer: true,
 
     theme: {
