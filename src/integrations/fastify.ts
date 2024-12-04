@@ -1,8 +1,7 @@
-import { Type } from '@sinclair/typebox';
 import type { FastifyInstance, FastifyRequest, RouteOptions } from 'fastify';
 import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
-import { AllSchemas, HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
+import { HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
 import { HttpStatuses, healthStatusToHttpStatus } from '../utils/http';
 import { pinoMedicusPlugin } from './pino';
