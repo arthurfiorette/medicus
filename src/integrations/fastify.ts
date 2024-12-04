@@ -93,7 +93,7 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
     fastify.route({
       url: '/health',
       method: 'GET',
-      // disable logging for health check$
+      // disable logging for health check
       logLevel: 'silent',
       ...route,
       schema: {
