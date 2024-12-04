@@ -90,23 +90,19 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
       });
     }
 
-    for (const schema of AllSchemas) {
-      fastify.addSchema(schema);
-    }
-
     fastify.route({
       url: '/health',
       method: 'GET',
-      // disable logging for health check
+      // disable logging for health check$
       logLevel: 'silent',
       ...route,
       schema: {
         tags: ['Health'],
         description: 'Performs a health check on the system',
         response: Object.fromEntries(
-          HttpStatuses.map((status) => [status, Type.Ref(HealthCheckResultSchema.$id!)])
+          HttpStatuses.map((status) => [status, HealthCheckResultSchema])
         ),
-        querystring: Type.Ref(HealthCheckQueryParamsSchema.$id!),
+        querystring: HealthCheckQueryParamsSchema,
         ...route?.schema
       },
       async handler(request, reply): Promise<HealthCheckResult> {
