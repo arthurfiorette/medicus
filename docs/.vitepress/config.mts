@@ -152,8 +152,7 @@ export default defineConfig({
           },
           {
             text: 'Fastify',
-            link: 'fastify.md',
-            todo: true
+            link: 'fastify.md'
           },
           {
             text: 'Avvio',
