@@ -1,8 +1,7 @@
-import { Type } from '@sinclair/typebox';
 import type { FastifyInstance, FastifyRequest, RouteOptions } from 'fastify';
 import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
-import { AllSchemas, HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
+import { HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
 import { HttpStatuses, healthStatusToHttpStatus } from '../utils/http';
 import { pinoMedicusPlugin } from './pino';
@@ -90,10 +89,6 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
       });
     }
 
-    for (const schema of AllSchemas) {
-      fastify.addSchema(schema);
-    }
-
     fastify.route({
       url: '/health',
       method: 'GET',
@@ -104,9 +99,9 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
         tags: ['Health'],
         description: 'Performs a health check on the system',
         response: Object.fromEntries(
-          HttpStatuses.map((status) => [status, Type.Ref(HealthCheckResultSchema.$id!)])
+          HttpStatuses.map((status) => [status, HealthCheckResultSchema])
         ),
-        querystring: Type.Ref(HealthCheckQueryParamsSchema.$id!),
+        querystring: HealthCheckQueryParamsSchema,
         ...route?.schema
       },
       async handler(request, reply): Promise<HealthCheckResult> {
