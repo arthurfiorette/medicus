@@ -1,12 +1,12 @@
 import type avvio from 'avvio';
 import { Medicus } from '../medicus';
-import type { BaseMedicusOption } from '../types';
+import type { MedicusOption } from '../types';
 
 /** The medicus type alias with its context adapted to avvio */
 export type AvvioMedicus<Ctx> = Medicus<avvio.mixedInstance<Ctx>>;
 
 /** The options type alias for the avvio medicus plugin */
-export type AvvioMedicusOptions<Ctx> = BaseMedicusOption<avvio.mixedInstance<Ctx>>;
+export type AvvioMedicusOptions<Ctx> = MedicusOption<avvio.mixedInstance<Ctx>>;
 
 /**
  * A basic avvio plugin that registers a medicus instance
