@@ -147,8 +147,7 @@ export default defineConfig({
         items: mapSideItems([
           {
             text: 'Node',
-            link: 'node.md',
-            todo: true
+            link: 'node.md'
           },
           {
             text: 'Fastify',
