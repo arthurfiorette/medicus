@@ -35,7 +35,7 @@ importers:
         version: 1.9.4
       '@fastify/under-pressure':
         specifier: ^9.0.1
-        version: 9.0.1
+        version: 9.0.2
       '@shikijs/vitepress-twoslash':
         specifier: ^1.24.0
         version: 1.24.0(typescript@5.7.2)
@@ -525,8 +525,8 @@ packages:
   '@fastify/merge-json-schemas@0.1.1':
     resolution: {integrity: sha512-fERDVz7topgNjtXsJTTW1JKLy0rhuLRcquYqNR9rF7OcVpCa2OVW49ZPDIhaRRCaUuvVxI+N416xUoF76HNSXA==}
 
-  '@fastify/under-pressure@9.0.1':
-    resolution: {integrity: sha512-aafxmJYJBgbYad4eoKwaWXtyBwoLoUCpVDahjzsvRcCjR8esm0F6s3jACWWtZqgcE498gV7fG1X4vzGt9lWw9A==}
+  '@fastify/under-pressure@9.0.2':
+    resolution: {integrity: sha512-zYTy8yYbU4+f//DMBFhbCmpGra3E1peEGcmmRLrwS6hnePJjXf2kNLULyh9y0qj4JldCxpdJBb7GB6jlFnN1kQ==}
 
   '@floating-ui/core@1.6.8':
     resolution: {integrity: sha512-7XJ9cPU+yI2QeLS+FCSlqNFZJq8arvswefkZrYI1yQBbftw6FyrZOxYSh+9S7z7TpeWlRt9zJ5IhM1WIL334jA==}
@@ -2014,7 +2014,7 @@ snapshots:
     dependencies:
       fast-deep-equal: 3.1.3
 
-  '@fastify/under-pressure@9.0.1':
+  '@fastify/under-pressure@9.0.2':
     dependencies:
       '@fastify/error': 4.0.0
       fastify-plugin: 5.0.1
