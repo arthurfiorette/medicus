@@ -13,13 +13,18 @@ const medicus = new Medicus({
 });
 ```
 
-> Note: The default name for the checker is `node`. You can change this by passing a checkerName option to the nodeMedicusPlugin function.
+## Options 
+
+The `nodeMedicusPlugin` accepts the following options: 
+
+ -  **`checkerName`**: The name of the checker. Defaults to `node`.
+ -  **`debug`**: If the output should show detailed system information. Defaults to `true`.
 
 ## Output
 
 When the `debug` flag is enabled, the plugin will return detailed system information when the health check is called.
 
-```json
+```jsonc
 {
   "status": "HEALTHY",
   "debug": {
