@@ -24,9 +24,9 @@ export interface DetailedHealthCheck {
 
   /**
    * A list of key-value pairs with additional information about the health check to be
-   * shown in the debug output
+   * shown in the debug output.
    */
-  debug?: Record<string, number | boolean | string>;
+  debug?: Record<string, number | boolean | string | Error>;
 }
 
 /**

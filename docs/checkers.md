@@ -49,6 +49,14 @@ medicus.addChecker({
 
 When using the [debug view](./debug-view.md), you can return more detailed information alongside the health status. This is particularly helpful when you want to provide additional context, such as messages, version information, or any other relevant data for debugging.
 
+::: tip
+
+The `error` field within `debug` is specifically designed to store errors thrown by the checker function.
+
+It is recommended to manually define thrown errors in this field, and manually returned errors should also adhere to this convention for consistency.
+
+:::
+
 ```ts
 import { HealthStatus } from 'medicus';
 

@@ -3,8 +3,10 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const integrationsFolder = path.resolve(root, 'src/integrations');
+const distConstantsPath = path.resolve(root, 'dist/utils/constants.js');
 const npmignorePath = path.resolve(root, '.npmignore');
 const distIndexDts = path.resolve(root, 'dist/index.d.ts');
+const pkgJson = require(path.resolve(root, 'package.json'));
 
 const files = fs.readdirSync(integrationsFolder);
 
@@ -66,3 +68,16 @@ if (!content.startsWith(key)) {
     'utf8'
   );
 }
+
+const constants = /* js */ `
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PKG_VERSION = exports.PKG_NAME = void 0;
+exports.PKG_NAME = ${JSON.stringify(pkgJson.name)};
+exports.PKG_VERSION = ${JSON.stringify(pkgJson.version)};
+//# sourceMappingURL=constants.js.map
+
+`.trim();
+
+fs.writeFileSync(distConstantsPath, constants, 'utf8');

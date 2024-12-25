@@ -66,6 +66,8 @@ describe('Medicus', () => {
   it('supports all kinds of returns', async (ctx) => {
     const mock = ctx.mock.method(console, 'error', () => {}, { times: 1 });
 
+    const err = new Error('Promise void error');
+
     using medicus = new Medicus({
       checkers: {
         returnsEnum() {
@@ -93,7 +95,7 @@ describe('Medicus', () => {
         },
         async returnsPromiseVoid() {},
         async rejectsPromiseVoid() {
-          throw new Error('Promise void error');
+          throw err;
         }
       }
     });
@@ -129,7 +131,7 @@ describe('Medicus', () => {
         },
         rejectsPromiseVoid: {
           status: HealthStatus.UNHEALTHY,
-          debug: { error: 'Error: Promise void error' }
+          debug: { error: err }
         }
       }
     });
