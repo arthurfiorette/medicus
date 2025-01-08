@@ -18,7 +18,7 @@ const medicus = new Medicus({
 The `nodeMedicusPlugin` accepts the following options: 
 
  -  **`checkerName`**: The name of the checker. Defaults to `node`.
- -  **`debug`**: If the output should show detailed system information. Defaults to `true`.
+ -  **`debug`**: Controls if this plugin should show detailed system information on a debug health request. Defaults to `true`. Users might wanna disable this in case showing this kind of detailed information is not needed on debug requests.
 
 ## Output
 
