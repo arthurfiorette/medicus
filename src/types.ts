@@ -125,10 +125,10 @@ export interface BaseMedicusOption<Ctx = void> {
    * By default {@linkcode Medicus.performCheck} needs to be called manually to perform a
    * health check.
    *
-   * If set to true, the health check will be performed automatically in the background at
+   * If set to a number greater than 0, the health check will be performed automatically in the background at
    * the specified interval.
    *
-   * @default null (disabled)
+   * @default undefined (disabled)
    */
   backgroundCheckInterval?: number;
 
