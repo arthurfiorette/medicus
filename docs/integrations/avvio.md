@@ -27,8 +27,8 @@ import { pinoMedicusPlugin } from 'medicus/pino.js'
 
 avvioMedicusPlugin({
   checkers: {
-    redis() {
-        redis.ping()
+    database() {
+       return HealthStatus.HEALTHY
     }
   },
   backgroundCheckInterval: 30000, // 30 seconds
@@ -40,7 +40,7 @@ avvioMedicusPlugin({
 
     try {
       // Sending heartbeat to a external system
-      await fetch(process.env.HEARTBEAT_URL) 
+      await fetch(process.env.HEARTBEAT_URL as string) 
     } catch (error) {
       console.error('Failed to send heartbeat', error)
     }
