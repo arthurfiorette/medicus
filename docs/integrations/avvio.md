@@ -29,6 +29,7 @@ import { pinoMedicusPlugin } from 'medicus/pino.js'
 type Context = {
   medicus: AvvioMedicus<Context>;
 };
+
 // medicus is added later by the plugin
 const app = avvio({} as Context);
 
