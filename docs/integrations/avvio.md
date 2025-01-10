@@ -20,30 +20,33 @@ The plugin enables automated health monitoring through background checks and hea
 Here's an example of heartbeat reporting:
 
 ```ts
+import avvio from 'avvio'
 import { HealthStatus } from 'medicus'
-import { avvioMedicusPlugin } from 'medicus/avvio.js'
+import { avvioMedicusPlugin, AvvioMedicus } from 'medicus/avvio.js'
 import { nodeMedicusPlugin } from 'medicus/node.js'
 import { pinoMedicusPlugin } from 'medicus/pino.js'
 
-avvioMedicusPlugin({
+type Context = {
+  medicus: AvvioMedicus<Context>;
+};
+// medicus is added later by the plugin
+const app = avvio({} as Context);
+
+app.use(avvioMedicusPlugin({
   checkers: {
     database() {
        return HealthStatus.HEALTHY
     }
   },
-  backgroundCheckInterval: 30000, // 30 seconds
+  backgroundCheckInterval: 30_000, // 30s
   async onBackgroundCheck(checkResult) {
     if (checkResult.status !== HealthStatus.HEALTHY) {
       console.error('Background check failed', checkResult)
       return
     }
 
-    try {
-      // Sending heartbeat to a external system
-      await fetch(process.env.HEARTBEAT_URL as string) 
-    } catch (error) {
-      console.error('Failed to send heartbeat', error)
-    }
+    // Sending heartbeat to a external system
+    await fetch(process.env.HEARTBEAT_URL!) 
   }
-});
+}));
 ```
