@@ -72,7 +72,7 @@ export class Medicus<Ctx = void> {
   public lastCheck: HealthCheckResult | undefined;
 
   /** The background check defined by the constructor.> This value can can be changed at any time. */
-  public onBackgroundCheck: BackgroundCheckListener | undefined;
+  public readonly onBackgroundCheck: BackgroundCheckListener | undefined;
 
   constructor(options: MedicusOption<Ctx> = {}) {
     // Configure the instance with the provided options
@@ -192,7 +192,11 @@ export class Medicus<Ctx = void> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
-    for await (const [serviceName, result] of Array.from(this.checkers, this.mapChecker, this)) {
+    for await (const [serviceName, result] of Array.from(
+      this.checkers,
+      this.executeChecker,
+      this
+    )) {
       if (result.status === HealthStatus.UNHEALTHY) {
         status = HealthStatus.UNHEALTHY;
       }
@@ -209,35 +213,35 @@ export class Medicus<Ctx = void> {
     return this.getLastCheck(debug)!;
   }
 
-  /** Simple helper function to yield the result of a health check */
-  protected async mapChecker([name, checker]: [string, HealthChecker<Ctx>]) {
-    return [name, await this.executeChecker(checker)] as const;
-  }
-
   /**
    * Runs a single health check and returns the result
    *
    * **This function never throws**
    */
-  protected async executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
+  protected async executeChecker([name, checker]: [string, HealthChecker<Ctx>]): Promise<
+    [string, DetailedHealthCheck]
+  > {
     try {
       const check = await checker(this.context);
 
       switch (typeof check) {
         case 'string':
-          return { status: check };
+          return [name, { status: check }];
         case 'object':
-          return check;
+          return [name, check];
         default:
-          return { status: HealthStatus.HEALTHY };
+          return [name, { status: HealthStatus.HEALTHY }];
       }
-    } catch (error) {
+    } catch (error: any) {
       this.errorLogger?.(error, checker.name);
 
-      return {
-        status: HealthStatus.UNHEALTHY,
-        debug: { error: String(error) }
-      };
+      return [
+        name,
+        {
+          status: HealthStatus.UNHEALTHY,
+          debug: { error }
+        }
+      ];
     }
   }
 
@@ -245,25 +249,22 @@ export class Medicus<Ctx = void> {
    * Bound function to be passed as reference that performs the background check and calls
    * the `onBackgroundCheck` callback if it's set
    */
-  protected static async performBackgroundCheck<Ctx>(
-    this: void,
-    self: Medicus<Ctx>
-  ): Promise<void> {
-    const result = await self.performCheck(true);
+  protected async performBackgroundCheck(): Promise<void> {
+    const result = await this.performCheck(true);
 
     // Calls the onBackgroundCheck callback if it's set
-    if (self.onBackgroundCheck) {
+    if (this.onBackgroundCheck) {
       try {
-        await self.onBackgroundCheck(result);
+        await this.onBackgroundCheck(result);
       } catch (error) {
         // nothing we can do if there isn't a logger
-        self.errorLogger?.(error, 'onBackgroundCheck');
+        this.errorLogger?.(error, 'onBackgroundCheck');
       }
     }
 
     // Runs the background check again with the same interval
     // unless it was manually removed
-    self.backgroundCheckTimer?.refresh();
+    this.backgroundCheckTimer?.refresh();
   }
 
   /** Starts the background check if it's not already running */
@@ -278,7 +279,10 @@ export class Medicus<Ctx = void> {
     }
 
     // Un-refs the timer so it doesn't keep the process running
-    this.backgroundCheckTimer = setTimeout(Medicus.performBackgroundCheck, interval, this).unref();
+    this.backgroundCheckTimer = setTimeout(
+      this.performBackgroundCheck.bind(this),
+      interval
+    ).unref();
   }
 
   /** Stops the background check if it's running */
