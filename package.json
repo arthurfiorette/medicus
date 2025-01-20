@@ -42,7 +42,7 @@
     "@arthurfiorette/biomejs-config": "^1.0.6",
     "@biomejs/biome": "^1.9.4",
     "@fastify/under-pressure": "^9.0.1",
-    "@shikijs/vitepress-twoslash": "^1.24.0",
+    "@shikijs/vitepress-twoslash": "^2.0.3",
     "@types/node": "^22.10.1",
     "c8": "^10.1.2",
     "husky": "^9.1.7",
