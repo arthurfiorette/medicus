@@ -72,7 +72,7 @@ export class Medicus<Ctx = void> {
   public lastCheck: HealthCheckResult | undefined;
 
   /** The background check defined by the constructor.> This value can can be changed at any time. */
-  public readonly onBackgroundCheck: BackgroundCheckListener | undefined;
+  public onBackgroundCheck: BackgroundCheckListener | undefined;
 
   constructor(options: MedicusOption<Ctx> = {}) {
     // Configure the instance with the provided options
@@ -84,15 +84,9 @@ export class Medicus<Ctx = void> {
       }
     }
 
-    if (options.context) {
-      this.context = options.context;
-    }
-
+    this.context = options.context!;
     this.errorLogger = options.errorLogger || defaultErrorLogger;
-
-    if (options.onBackgroundCheck) {
-      this.onBackgroundCheck = options.onBackgroundCheck;
-    }
+    this.onBackgroundCheck = options.onBackgroundCheck;
 
     // adds before userland checkers
     if (options.plugins) {
@@ -107,10 +101,6 @@ export class Medicus<Ctx = void> {
       this.addChecker(options.checkers);
     }
 
-    if (options.backgroundCheckInterval) {
-      this.startBackgroundCheck(options.backgroundCheckInterval);
-    }
-
     // post hook once everything is set up
     if (options.plugins) {
       for (const plugin of options.plugins) {
@@ -118,6 +108,10 @@ export class Medicus<Ctx = void> {
           plugin.created(this);
         }
       }
+    }
+
+    if (options.backgroundCheckInterval) {
+      this.startBackgroundCheck(options.backgroundCheckInterval);
     }
   }
 

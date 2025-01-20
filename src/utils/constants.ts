@@ -4,4 +4,4 @@
 export const PKG_NAME = 'medicus';
 
 /** The version of the package */
-export const PKG_VERSION = '0.0.0'; // changed by scripts/postbuild.js
+export const PKG_VERSION = '0.2.2'; // changed by scripts/postbuild.js
