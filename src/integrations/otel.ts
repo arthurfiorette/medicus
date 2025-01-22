@@ -3,13 +3,13 @@ import { definePlugin } from '../plugins';
 import { HealthStatus } from '../types';
 import { PKG_NAME, PKG_VERSION } from '../utils/constants';
 
-export enum AttributeNames {
+export enum MedicusAttributesNames {
   DEBUG = 'medicus.debug',
   CHECKER_NAME = 'medicus.checker_name',
   CHECKER_STATUS = 'medicus.checker_status'
 }
 
-export const openTelemetryPlugin = definePlugin<void>(() => ({
+export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
   created(medicus) {
     const tracer = trace.getTracer(PKG_NAME, PKG_VERSION);
 
@@ -31,7 +31,7 @@ export const openTelemetryPlugin = definePlugin<void>(() => ({
       console.log('performCheck');
       const span = tracer.startSpan(
         'medicus.performCheck',
-        { attributes: { [AttributeNames.DEBUG]: !!debug } },
+        { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
         context.active()
       );
 
@@ -57,7 +57,7 @@ export const openTelemetryPlugin = definePlugin<void>(() => ({
     medicus.executeChecker = async function otelExecuteChecker(args) {
       const span = tracer.startSpan(
         `medicus.checker:${args[0]}`,
-        { attributes: { [AttributeNames.CHECKER_NAME]: args[0] }, kind: SpanKind.PRODUCER },
+        { attributes: { [MedicusAttributesNames.CHECKER_NAME]: args[0] }, kind: SpanKind.PRODUCER },
         context.active()
       );
 
@@ -71,7 +71,7 @@ export const openTelemetryPlugin = definePlugin<void>(() => ({
         );
 
         span.setAttributes({
-          [AttributeNames.CHECKER_STATUS]: result[1].status,
+          [MedicusAttributesNames.CHECKER_STATUS]: result[1].status,
           ...result[1].debug
         });
 
