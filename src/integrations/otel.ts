@@ -15,9 +15,8 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
 
     if (medicus.onBackgroundCheck) {
       const old = medicus.onBackgroundCheck;
-      medicus.onBackgroundCheck = function otelBackground(result) {
+      medicus.onBackgroundCheck = function otelOnBackgroundCheck(result) {
         const span = tracer.startSpan('medicus.onBackgroundCheck', undefined, context.active());
-
         try {
           return context.with(trace.setSpan(context.active(), span), old, undefined, result);
         } finally {
@@ -28,7 +27,6 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
 
     const oldPerformCheck = medicus.performCheck;
     medicus.performCheck = function otelPerformCheck(debug?: boolean) {
-      console.log('performCheck');
       const span = tracer.startSpan(
         'medicus.performCheck',
         { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
@@ -91,10 +89,10 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
       }
     };
 
-    // @ts-expect-error - protected property
+    //@ts-expect-error - protected property
     const oldPerformBackgroundCheck = medicus.performBackgroundCheck;
     //@ts-expect-error - protected property
-    medicus.performBackgroundCheck = function performBackgroundCheck() {
+    medicus.performBackgroundCheck = function otelPerformBackgroundCheck() {
       const span = tracer.startSpan('medicus.performBackgroundCheck', undefined, context.active());
 
       try {
