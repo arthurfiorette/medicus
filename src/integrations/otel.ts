@@ -24,13 +24,17 @@ export enum MedicusAttributesNames {
  * This plugin instruments key Medicus methods to generate OpenTelemetry spans,
  * providing detailed tracing for health checks and background checks
  */
-export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
+export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors = true) => ({
   created(medicus) {
     const tracer = trace.getTracer(PKG_NAME, PKG_VERSION);
 
     if (medicus.onBackgroundCheck) {
       const old = medicus.onBackgroundCheck;
       medicus.onBackgroundCheck = function otelOnBackgroundCheck(result) {
+        if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
+          return old.call(undefined, result);
+        }
+
         const span = tracer.startSpan('medicus.onBackgroundCheck', undefined, context.active());
         try {
           return context.with(trace.setSpan(context.active(), span), old, undefined, result);
@@ -41,7 +45,12 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
     }
 
     const oldPerformCheck = medicus.performCheck;
-    medicus.performCheck = function otelPerformCheck(debug?: boolean) {
+    medicus.performCheck = async function otelPerformCheck(debug?: boolean) {
+      const result = await oldPerformCheck.call(this, debug);
+      if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
+        return result;
+      }
+
       const span = tracer.startSpan(
         'medicus.performCheck',
         { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
@@ -68,6 +77,12 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
     const oldExecuteChecker = medicus.executeChecker;
     //@ts-expect-error - protected property
     medicus.executeChecker = async function otelExecuteChecker(args) {
+      const result = await oldExecuteChecker.call(this, args);
+
+      if (onlyTraceErrors && result[1].status === HealthStatus.HEALTHY) {
+        return result;
+      }
+
       const span = tracer.startSpan(
         `medicus.checker:${args[0]}`,
         { attributes: { [MedicusAttributesNames.CHECKER_NAME]: args[0] }, kind: SpanKind.PRODUCER },
@@ -107,7 +122,12 @@ export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
     //@ts-expect-error - protected property
     const oldPerformBackgroundCheck = medicus.performBackgroundCheck;
     //@ts-expect-error - protected property
-    medicus.performBackgroundCheck = function otelPerformBackgroundCheck() {
+    medicus.performBackgroundCheck = async function otelPerformBackgroundCheck() {
+      const result = await medicus.performCheck.call(this);
+      if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
+        return result;
+      }
+
       const span = tracer.startSpan('medicus.performBackgroundCheck', undefined, context.active());
 
       try {
