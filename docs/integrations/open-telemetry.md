@@ -4,7 +4,7 @@ OpenTelemetry is an open-source observability framework that provides tools, API
 
 The `openTelemetryMedicusPlugin` simplifies OpenTelemetry integration by automatically configuring it for your application. With just a simple import and plugin registration, users can gain full access to distributed tracing, enabling seamless monitoring with any OpenTelemetry-compatible backend.
 
-This plugin eliminates the need for manual instrumentation or additional boilerplate, providing a smooth and hassle-free observability solution.
+This plugin eliminates the need for manual instrumentation or additional boilerplate, providing a smooth experience and integration.
 
 ## Example of usage
 

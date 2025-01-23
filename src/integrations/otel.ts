@@ -9,7 +9,7 @@ export enum MedicusAttributesNames {
    */
   DEBUG = 'medicus.debug',
   /**
-   * The name of the health checker being executed
+   * The name of the health checker executed
    */
   CHECKER_NAME = 'medicus.checker_name',
   /**
@@ -19,7 +19,7 @@ export enum MedicusAttributesNames {
 }
 
 /**
- * A that plugin that integrates OpenTelemetry tracing into the Medicus health system.
+ * A plugin that integrates OpenTelemetry tracing into the Medicus system
  *
  * This plugin instruments key Medicus methods to generate OpenTelemetry spans,
  * providing detailed tracing for health checks and background checks
