@@ -4,11 +4,26 @@ import { HealthStatus } from '../types';
 import { PKG_NAME, PKG_VERSION } from '../utils/constants';
 
 export enum MedicusAttributesNames {
+  /**
+   * Indicates whether debugging is enabled
+   */
   DEBUG = 'medicus.debug',
+  /**
+   * The name of the health checker being executed
+   */
   CHECKER_NAME = 'medicus.checker_name',
+  /**
+   * The status of the health checker execution
+   */
   CHECKER_STATUS = 'medicus.checker_status'
 }
 
+/**
+ * A that plugin that integrates OpenTelemetry tracing into the Medicus health system.
+ *
+ * This plugin instruments key Medicus methods to generate OpenTelemetry spans,
+ * providing detailed tracing for health checks and background checks
+ */
 export const openTelemetryMedicusPlugin = definePlugin<void>(() => ({
   created(medicus) {
     const tracer = trace.getTracer(PKG_NAME, PKG_VERSION);

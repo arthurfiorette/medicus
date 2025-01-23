@@ -158,9 +158,8 @@ export default defineConfig({
             link: 'avvio.md'
           },
           {
-            text: 'Open Telemetry',
-            link: 'open-telemetry.md',
-            todo: true
+            text: 'OpenTelemetry',
+            link: 'open-telemetry.md'
           },
           {
             text: 'Pino',
