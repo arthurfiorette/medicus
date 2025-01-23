@@ -116,7 +116,7 @@ export class Medicus<Ctx = void> {
   }
 
   /** Adds a new checker to be executed when the health check is run */
-  addChecker(checkers: HealthCheckerMap<Ctx>): void {
+  addChecker(this: this, checkers: HealthCheckerMap<Ctx>): void {
     for (const [name, value] of Object.entries(checkers)) {
       if (this.checkers.has(name)) {
         throw new Error(`A checker with the name "${name}" is already registered`);
@@ -127,17 +127,17 @@ export class Medicus<Ctx = void> {
   }
 
   /** Returns an read-only iterator of all the checkers */
-  listCheckers(): MapIterator<HealthChecker<Ctx>> {
+  listCheckers(this: this): MapIterator<HealthChecker<Ctx>> {
     return this.checkers.values();
   }
 
   /** Returns an read-only iterator of all the checkers */
-  countCheckers(): number {
+  countCheckers(this: this): number {
     return this.checkers.size;
   }
 
   /** Returns an read-only iterator of all the checkers and their names */
-  listCheckersEntries(): MapIterator<[string, HealthChecker<Ctx>]> {
+  listCheckersEntries(this: this): MapIterator<[string, HealthChecker<Ctx>]> {
     return this.checkers.entries();
   }
 
@@ -146,7 +146,7 @@ export class Medicus<Ctx = void> {
    *
    * @returns `true` if all provided checkers were removed, `false` otherwise
    */
-  removeChecker(...checkerNames: string[]): boolean {
+  removeChecker(this: this, ...checkerNames: string[]): boolean {
     let allRemoved = true;
 
     for (const name of checkerNames) {
@@ -166,7 +166,7 @@ export class Medicus<Ctx = void> {
    *
    * - `debug` defaults to `false`
    */
-  getLastCheck(debug = false): HealthCheckResult | null {
+  getLastCheck(this: this, debug = false): HealthCheckResult | null {
     if (!this.lastCheck) {
       return null;
     }
@@ -182,7 +182,7 @@ export class Medicus<Ctx = void> {
    *
    * - `debug` defaults to `false`
    */
-  async performCheck(debug = false): Promise<HealthCheckResult> {
+  async performCheck(this: this, debug = false): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
 
@@ -212,9 +212,10 @@ export class Medicus<Ctx = void> {
    *
    * **This function never throws**
    */
-  protected async executeChecker([name, checker]: [string, HealthChecker<Ctx>]): Promise<
-    [string, DetailedHealthCheck]
-  > {
+  protected async executeChecker(
+    this: this,
+    [name, checker]: [string, HealthChecker<Ctx>]
+  ): Promise<[string, DetailedHealthCheck]> {
     try {
       const check = await checker(this.context);
 
@@ -243,7 +244,7 @@ export class Medicus<Ctx = void> {
    * Bound function to be passed as reference that performs the background check and calls
    * the `onBackgroundCheck` callback if it's set
    */
-  protected async performBackgroundCheck(): Promise<void> {
+  protected async performBackgroundCheck(this: this): Promise<void> {
     const result = await this.performCheck(true);
 
     // Calls the onBackgroundCheck callback if it's set
@@ -262,7 +263,7 @@ export class Medicus<Ctx = void> {
   }
 
   /** Starts the background check if it's not already running */
-  startBackgroundCheck(interval: number) {
+  startBackgroundCheck(this: this, interval: number) {
     if (
       // already running
       this.backgroundCheckTimer ||
@@ -280,7 +281,7 @@ export class Medicus<Ctx = void> {
   }
 
   /** Stops the background check if it's running */
-  stopBackgroundCheck(): void {
+  stopBackgroundCheck(this: this): void {
     if (!this.backgroundCheckTimer) {
       return;
     }
@@ -290,7 +291,7 @@ export class Medicus<Ctx = void> {
   }
 
   // to be used as `using medicus = new Medicus()`
-  [Symbol.dispose]() {
+  [Symbol.dispose](this: this) {
     return this.stopBackgroundCheck();
   }
 }
