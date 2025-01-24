@@ -1,4 +1,5 @@
 import { SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
+
 import { Medicus } from '../medicus';
 import { definePlugin } from '../plugins';
 import { HealthStatus } from '../types';
@@ -41,9 +42,6 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
       'onBackgroundCheck',
       (onBackgroundCheck) =>
         function otelOnBackgroundCheck(result) {
-          if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
-            return onBackgroundCheck.call(undefined, result);
-          }
           const span = tracer.startSpan('medicus.onBackgroundCheck', undefined, context.active());
           try {
             return context.with(
@@ -63,20 +61,28 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
       'performCheck',
       (performCheck) =>
         async function otelPerformCheck(debug?: boolean) {
-          const result = await performCheck.call(this, debug);
-          if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
-            return result;
-          }
-
-          const span = tracer.startSpan(
-            'medicus.performCheck',
-            { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
-            context.active()
-          );
+          let span: any;
 
           try {
-            return context.with(trace.setSpan(context.active(), span), performCheck, this, debug);
+            const result = await context.with(context.active(), performCheck, this, debug);
+
+            if (result.status === HealthStatus.HEALTHY && onlyTraceErrors) {
+              return result;
+            }
+            span = tracer.startSpan(
+              'medicus.performCheck',
+              { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
+              context.active()
+            );
+
+            return result;
           } catch (error: any) {
+            const span = tracer.startSpan(
+              'medicus.performCheck',
+              { attributes: { [MedicusAttributesNames.DEBUG]: !!debug } },
+              context.active()
+            );
+
             span.setStatus({
               code: SpanStatusCode.ERROR,
               message: error.message
@@ -86,7 +92,7 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
 
             throw error;
           } finally {
-            span.end();
+            span?.end();
           }
         }
     );
@@ -96,28 +102,25 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
       'executeChecker',
       (executeChecker) =>
         async function otelExecuteChecker(args) {
-          const result = await executeChecker.call(this, args);
-
-          if (onlyTraceErrors && result[1].status === HealthStatus.HEALTHY) {
-            return result;
-          }
-
-          const span = tracer.startSpan(
-            `medicus.checker:${args[0]}`,
-            {
-              attributes: { [MedicusAttributesNames.CHECKER_NAME]: args[0] },
-              kind: SpanKind.PRODUCER
-            },
-            context.active()
-          );
+          let span: any;
 
           try {
             // this function never throws
-            const result = await context.with(
-              trace.setSpan(context.active(), span),
-              executeChecker,
-              this,
-              args
+            const result = await context.with(context.active(), executeChecker, this, args);
+
+            if (result[1].status === HealthStatus.HEALTHY && onlyTraceErrors) {
+              return result;
+            }
+
+            const spanName = `medicus.checker:${args[0]}`;
+
+            span = tracer.startSpan(
+              spanName,
+              {
+                attributes: { [MedicusAttributesNames.CHECKER_NAME]: args[0] },
+                kind: SpanKind.PRODUCER
+              },
+              context.active()
             );
 
             span.setAttributes({
@@ -140,7 +143,7 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
 
             return result;
           } finally {
-            span.end();
+            span?.end();
           }
         }
     );
@@ -150,11 +153,6 @@ export const openTelemetryMedicusPlugin = definePlugin<boolean>((onlyTraceErrors
       'performBackgroundCheck',
       (performBackgroundCheck) =>
         async function otelPerformBackgroundCheck() {
-          const result = await medicus.performCheck.call(this);
-          if (onlyTraceErrors && result.status === HealthStatus.HEALTHY) {
-            return;
-          }
-
           const span = tracer.startSpan(
             'medicus.performBackgroundCheck',
             undefined,
