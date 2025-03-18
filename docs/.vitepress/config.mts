@@ -60,6 +60,11 @@ export default defineConfig({
       provider: 'local'
     },
 
+    carbonAds: {
+      code: 'CEBDT27Y',
+      placement: 'vuejsorg'
+    },
+
     nav: [
       {
         text: '<img alt="github.com/medicus Org stars" src="https://img.shields.io/github/stars/arthurfiorette/medicus?style=flat&logo=github&label=Star%20us!&color=%239CBD88">',
@@ -191,7 +196,26 @@ export default defineConfig({
       }
     ]
   },
-  head: [['link', { rel: 'icon', href: '/medicus.svg', type: 'image/x-icon' }]]
+  head: [
+    [
+      'link',
+      {
+        rel: 'icon',
+        href: '/medicus.svg',
+        type: 'image/x-icon'
+      }
+    ],
+
+    [
+      'script',
+      {
+        defer: '',
+        'data-domain': 'plausible.org',
+        src: 'https://plausible.io/js/script.js'
+      },
+      '/* This site metrics are public available at https://plausible.io/medicus.js.org */'
+    ]
+  ]
 });
 
 function mapSideItems(items: { link?: string; text: string; todo?: boolean }[]) {
