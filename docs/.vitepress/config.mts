@@ -210,7 +210,7 @@ export default defineConfig({
       'script',
       {
         defer: '',
-        'data-domain': 'plausible.org',
+        'data-domain': 'medicus.js.org',
         src: 'https://plausible.io/js/script.js'
       },
       '/* This site metrics are public available at https://plausible.io/medicus.js.org */'
