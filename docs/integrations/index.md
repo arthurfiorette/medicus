@@ -8,7 +8,6 @@ Plugins are used within `Medicus`'s `plugins` configuration option to enhance it
 
 - **[Pino](./pino.md):** Integrates with the `Pino` logger to map error logging effectively.
 - **[Node.js](./node.md):** Adds a `Node.js` health checker to monitor event loop lag and ensure runtime stability.
-- **[OpenTelemetry](./open-telemetry.md):** Enables `OpenTelemetry` support to trace health checks and capture failure diagnostics.
 
 ## Third-Party Integrations
 
