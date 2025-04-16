@@ -55,7 +55,7 @@ medicus.addChecker({
     // Custom health logic
     return HealthStatus.HEALTHY;
   },
-  cache() {
+  async cache() {
     // Simulate an unhealthy status
     return HealthStatus.UNHEALTHY;
   }
