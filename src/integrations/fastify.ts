@@ -21,11 +21,11 @@ export type FastifyMedicsPluginOptions = Omit<
   'manualClearBackgroundCheck' | 'context' | 'errorLogger'
 > & {
   /**
-   * The route options to be passed to fastify
+   * The route options to be passed to fastify. Use `false` to disable the route
    *
    * @default { url: '/health', method: 'GET', logLevel: 'silent' }
    */
-  route?: Partial<Omit<RouteOptions, 'handler'>>;
+  route?: false | Partial<Omit<RouteOptions, 'handler'>>;
 
   /**
    * Whether to reply with a complete health check result or just the status
@@ -33,13 +33,6 @@ export type FastifyMedicsPluginOptions = Omit<
    * @default false
    */
   debug?: DebugDetector;
-
-  /**
-   * The name of the pressure checker to use when @fastify/under-pressure is used
-   *
-   * @default 'pressure'
-   */
-  pressureCheckerName?: string;
 };
 
 /**
@@ -58,10 +51,7 @@ export type FastifyMedicsPluginOptions = Omit<
  * ```
  */
 export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
-  async (
-    fastify,
-    { route, debug = false, pressureCheckerName = 'pressure', ...medicusOptions }
-  ) => {
+  async (fastify, { route, debug = false, ...medicusOptions }) => {
     // Adds fastify error logger
     medicusOptions.plugins ??= [];
     medicusOptions.plugins.push(pinoMedicusPlugin(fastify.log));
@@ -78,7 +68,7 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
     // @fastify/under-pressure plugin support
     if (fastify.hasPlugin('@fastify/under-pressure')) {
       fastify.medicus.addChecker({
-        async [pressureCheckerName]() {
+        async underPressure() {
           return {
             //@ts-ignore - only if @fastify/under-pressure is used
             status: fastify.isUnderPressure() ? HealthStatus.DEGRADED : HealthStatus.HEALTHY,
@@ -89,43 +79,45 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
       });
     }
 
-    fastify.route({
-      url: '/health',
-      method: 'GET',
-      // disable logging for health check
-      logLevel: 'silent',
-      ...route,
-      schema: {
-        tags: ['Health'],
-        description: 'Performs a health check on the system',
-        response: Object.fromEntries(
-          HttpStatuses.map((status) => [status, HealthCheckResultSchema])
-        ),
-        querystring: HealthCheckQueryParamsSchema,
-        ...route?.schema
-      },
-      async handler(request, reply): Promise<HealthCheckResult> {
-        let result: HealthCheckResult | null = null;
+    if (route !== false) {
+      fastify.route({
+        url: '/health',
+        method: 'GET',
+        // disable logging for health check
+        logLevel: 'silent',
+        ...route,
+        schema: {
+          tags: ['Health'],
+          description: 'Performs a health check on the system',
+          response: Object.fromEntries(
+            HttpStatuses.map((status) => [status, HealthCheckResultSchema])
+          ),
+          querystring: HealthCheckQueryParamsSchema,
+          ...route?.schema
+        },
+        async handler(request, reply): Promise<HealthCheckResult> {
+          let result: HealthCheckResult | null = null;
 
-        const isDebug = typeof debug === 'boolean' ? debug : await debug(request);
+          const isDebug = typeof debug === 'boolean' ? debug : await debug(request);
 
-        //@ts-expect-error - untyped from querystring
-        if (request.query.last) {
-          result = this.medicus.getLastCheck(isDebug);
+          //@ts-expect-error - untyped from querystring
+          if (request.query.last) {
+            result = this.medicus.getLastCheck(isDebug);
+          }
+
+          if (!result) {
+            result = await this.medicus.performCheck(isDebug);
+          }
+
+          //@ts-expect-error - untyped from querystring
+          if (request.query.simulate) result.status = request.query.simulate;
+
+          reply.status(healthStatusToHttpStatus(result.status));
+
+          return result;
         }
-
-        if (!result) {
-          result = await this.medicus.performCheck(isDebug);
-        }
-
-        //@ts-expect-error - untyped from querystring
-        if (request.query.simulate) result.status = request.query.simulate;
-
-        reply.status(healthStatusToHttpStatus(result.status));
-
-        return result;
-      }
-    });
+      });
+    }
 
     // Clears the background check on close
     fastify.addHook('onClose', function (_, done) {

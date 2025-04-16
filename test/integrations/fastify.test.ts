@@ -110,7 +110,7 @@ describe('medicusPlugin()', () => {
       // non debug
       status: HealthStatus.HEALTHY,
       services: {
-        pressure: {
+        underPressure: {
           status: HealthStatus.HEALTHY,
           // idk why its 0 but not our concern
           debug: { eventLoopDelay: 0, rssBytes: 0, heapUsed: 0, eventLoopUtilized: 0 }
@@ -287,5 +287,19 @@ describe('medicusPlugin()', () => {
     });
 
     assert.strictEqual(response3.statusCode, 200);
+  });
+
+  it('ensures route: false does not expose a route', async () => {
+    await using app = fastify();
+    await app.register(fastifyMedicusPlugin, {
+      route: false
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health'
+    });
+
+    assert.strictEqual(response.statusCode, 404);
   });
 });
