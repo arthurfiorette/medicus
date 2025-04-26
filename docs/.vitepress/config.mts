@@ -206,9 +206,9 @@ export default defineConfig({
       {
         defer: '',
         'data-domain': 'medicus.js.org',
-        src: 'https://plausible.io/js/script.js'
+        src: 'https://metrics.arthur.one/js/script.js'
       },
-      '/* This site metrics are public available at https://plausible.io/medicus.js.org */'
+      '/* This site metrics are public available at https://metrics.arthur.one/medicus.js.org */'
     ]
   ]
 });
