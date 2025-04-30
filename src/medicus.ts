@@ -74,6 +74,12 @@ export class Medicus<Ctx = void> {
   /** The background check defined by the constructor.> This value can can be changed at any time. */
   public onBackgroundCheck: BackgroundCheckListener | undefined;
 
+  /**
+   * Controls whether a health check runs immediately upon initializing the background check.
+   * When true (default), the first check is executed right away without waiting for the interval.
+   */
+  protected skipInitialInterval: boolean | undefined = true;
+
   constructor(options: MedicusOption<Ctx> = {}) {
     // Configure the instance with the provided options
     if (options.plugins) {
@@ -108,6 +114,7 @@ export class Medicus<Ctx = void> {
     }
 
     if (options.backgroundCheckInterval) {
+      this.skipInitialInterval = options.skipInitialInterval;
       this.startBackgroundCheck(options.backgroundCheckInterval);
     }
 
@@ -275,6 +282,11 @@ export class Medicus<Ctx = void> {
       interval < 1
     ) {
       return;
+    }
+
+    if (this.skipInitialInterval) {
+      Medicus.performBackgroundCheck(this);
+      this.skipInitialInterval = false;
     }
 
     // Un-refs the timer so it doesn't keep the process running

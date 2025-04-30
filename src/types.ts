@@ -125,12 +125,28 @@ export interface BaseMedicusOption<Ctx = void> {
    * By default {@linkcode Medicus.performCheck} needs to be called manually to perform a
    * health check.
    *
-   * If set to a number greater than 0, the health check will be performed automatically in the background at
-   * the specified interval.
+   * If set to a number greater than 0, the health check will be performed automatically in the
+   * background at the specified interval.
    *
    * @default undefined (disabled)
    */
   backgroundCheckInterval?: number;
+
+  /**
+   * Controls whether a health check runs immediately upon initialization.
+   *
+   * When true, a health check is executed right away when the background check
+   * is started, without waiting for the first interval to elapse.
+   *
+   * This is particularly useful during application startup/restart scenarios where waiting
+   * for the first interval could cause monitoring services to incorrectly mark your service
+   * as "down" temporarily, which may trigger false alerts or impact availability metrics
+   *
+   * When false, the first check will only happen after the specified interval has passed.
+   *
+   * @default true
+   */
+  skipInitialInterval?: boolean;
 
   /**
    * Called for every generated background check result.
