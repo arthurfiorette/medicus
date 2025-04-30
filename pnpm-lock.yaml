@@ -26,9 +26,6 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
-      vitepress-plugin-llms:
-        specifier: ^1.1.1
-        version: 1.1.1
     devDependencies:
       '@arthurfiorette/biomejs-config':
         specifier: ^1.0.6
@@ -60,6 +57,9 @@ importers:
       vitepress:
         specifier: ^1.5.0
         version: 1.5.0(@algolia/client-search@5.15.0)(@types/node@22.10.2)(postcss@8.4.49)(search-insights@2.17.3)(typescript@5.7.2)
+      vitepress-plugin-llms:
+        specifier: ^1.1.1
+        version: 1.1.1
 
 packages:
 
