@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs';
-import ts from 'typescript';
 import { defineConfig } from 'vitepress';
+import llmstxt from 'vitepress-plugin-llms';
 import { description, version } from '../../package.json';
 
 export default defineConfig({
@@ -13,6 +13,16 @@ export default defineConfig({
   cleanUrls: true,
   appearance: true,
   lastUpdated: true,
+
+  vite: {
+    plugins: [
+      llmstxt({
+        domain: 'https://medicus.js.org',
+        description,
+        title: 'Medicus'
+      })
+    ]
+  },
 
   markdown: {
     typographer: true,
@@ -188,6 +198,14 @@ export default defineConfig({
             todo: true
           }
         ])
+      },
+      {
+        text: 'llms.txt',
+        link: 'llms.txt'
+      },
+      {
+        text: 'llms-full.txt',
+        link: 'llms-full.txt'
       }
     ]
   },
