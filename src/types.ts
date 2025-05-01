@@ -146,7 +146,7 @@ export interface BaseMedicusOption<Ctx = void> {
    *
    * @default true
    */
-  skipInitialInterval?: boolean;
+  eagerBackgroundCheck?: boolean;
 
   /**
    * Called for every generated background check result.

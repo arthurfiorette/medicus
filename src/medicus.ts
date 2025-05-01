@@ -78,7 +78,7 @@ export class Medicus<Ctx = void> {
    * Controls whether a health check runs immediately upon initializing the background check.
    * When true (default), the first check is executed right away without waiting for the interval.
    */
-  protected skipInitialInterval: boolean | undefined = true;
+  protected eagerBackgroundCheck = true;
 
   constructor(options: MedicusOption<Ctx> = {}) {
     // Configure the instance with the provided options
@@ -114,8 +114,11 @@ export class Medicus<Ctx = void> {
     }
 
     if (options.backgroundCheckInterval) {
-      this.skipInitialInterval = options.skipInitialInterval;
       this.startBackgroundCheck(options.backgroundCheckInterval);
+    }
+
+    if (options.eagerBackgroundCheck) {
+      this.eagerBackgroundCheck = options.eagerBackgroundCheck;
     }
 
     // post hook once everything is set up
@@ -284,9 +287,8 @@ export class Medicus<Ctx = void> {
       return;
     }
 
-    if (this.skipInitialInterval) {
+    if (this.eagerBackgroundCheck) {
       Medicus.performBackgroundCheck(this);
-      this.skipInitialInterval = false;
     }
 
     // Un-refs the timer so it doesn't keep the process running
