@@ -27,6 +27,20 @@ console.log(check);
 
 With background checks enabled, Medicus will automatically run health checks on a consistent interval, but you can still manually trigger a check whenever necessary using `performCheck()`.
 
+## Immediate Execution with `eagerBackgroundCheck`
+
+When you enable background checks, you can control whether an initial health check runs immediately upon initialization or if Medicus should wait for the first interval to elapse. This behavior is controlled by the eagerBackgroundCheck option, which defaults to true.
+
+```ts
+import { Medicus } from 'medicus';
+
+const medicus = new Medicus({
+  backgroundCheckInterval: 60_000,
+  // Controls whether a health check runs immediately
+  eagerBackgroundCheck: false
+});
+```
+
 ## Listening for Background Checks
 
 You can also set up an event listener to monitor when a background check is performed. The listener can be either `sync` or `async` and will be triggered every time a check is completed.
