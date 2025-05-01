@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import test, { describe, it } from 'node:test';
-import { setTimeout } from 'node:timers/promises';
+import { setImmediate, setTimeout } from 'node:timers/promises';
 import { HealthStatus, Medicus, definePlugin } from '../src';
 
 describe('Medicus', () => {
@@ -175,6 +175,43 @@ describe('Medicus', () => {
       status: HealthStatus.HEALTHY,
       services: {}
     });
+  });
+
+  test('backgroundCheck does not runs before first timeout', async () => {
+    let backgroundCheckCalled = false;
+
+    using _ = new Medicus({
+      checkers: {
+        success() {}
+      },
+      backgroundCheckInterval: 1000,
+      eagerBackgroundCheck: false,
+      onBackgroundCheck() {
+        backgroundCheckCalled = true;
+      }
+    });
+
+    assert.ok(!backgroundCheckCalled);
+  });
+
+  test('backgroundCheck does runs before first timeout when eagerBackgroundCheck', async () => {
+    let backgroundCheckCalled = false;
+
+    using _ = new Medicus({
+      checkers: {
+        success() {}
+      },
+      backgroundCheckInterval: 1000,
+      eagerBackgroundCheck: true,
+      onBackgroundCheck() {
+        backgroundCheckCalled = true;
+      }
+    });
+
+    // performCheck is an async function that only starts in the next tick
+    await setImmediate();
+
+    assert.ok(backgroundCheckCalled);
   });
 
   test('removeChecker returns false when an non existing checker name is provided', async () => {

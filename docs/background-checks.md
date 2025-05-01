@@ -31,6 +31,8 @@ With background checks enabled, Medicus will automatically run health checks on 
 
 When you enable background checks, you can control whether an initial health check runs immediately upon initialization or if Medicus should wait for the first interval to elapse. This behavior is controlled by the eagerBackgroundCheck option, which defaults to true.
 
+This is especially useful to avoid unintentionally flagging containers with downtime when during deployment of new versions, since it would restart the timeout once the container starts back up again, delaying the first health report.
+
 ```ts
 import { Medicus } from 'medicus';
 
