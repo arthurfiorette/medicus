@@ -288,7 +288,7 @@ export class Medicus<Ctx = void> {
     }
 
     if (this.eagerBackgroundCheck) {
-      Medicus.performBackgroundCheck(this);
+      void Medicus.performBackgroundCheck(this);
     }
 
     // Un-refs the timer so it doesn't keep the process running
