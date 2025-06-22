@@ -1,6 +1,6 @@
 {
   "name": "medicus",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "A flexible and agnostic health check library for Node.js.",
   "bugs": {
     "url": "https://github.com/arthurfiorette/medicus/issues"
