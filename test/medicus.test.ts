@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import test, { describe, it } from 'node:test';
 import { setImmediate, setTimeout } from 'node:timers/promises';
-import { HealthStatus, Medicus, definePlugin } from '../src';
+import { definePlugin, HealthStatus, Medicus } from '../src';
 
 describe('Medicus', () => {
   it('returns healthy when no checkers are added', async () => {

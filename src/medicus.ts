@@ -1,9 +1,9 @@
 import {
   type BackgroundCheckListener,
   type DetailedHealthCheck,
-  type HealthCheckResult,
   type HealthChecker,
   type HealthCheckerMap,
+  type HealthCheckResult,
   HealthStatus,
   type MedicusErrorLogger,
   type MedicusOption
