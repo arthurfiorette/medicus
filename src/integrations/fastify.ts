@@ -95,6 +95,11 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
           querystring: HealthCheckQueryParamsSchema,
           ...route?.schema
         },
+        config: {
+          // disable OpenTelemetry for this route
+          // https://github.com/fastify/otel#usage
+          otel: false
+        },
         async handler(request, reply): Promise<HealthCheckResult> {
           let result: HealthCheckResult | null = null;
 
