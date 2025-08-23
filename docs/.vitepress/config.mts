@@ -48,7 +48,10 @@ export default defineConfig({
               medicus: ['./index.ts'],
               'medicus/*': ['./integrations/*']
             },
-            types: [path.resolve('docs/.vitepress/globals.d.ts')]
+            types: [
+              path.resolve('docs/.vitepress/globals.d.ts'),
+              path.resolve('node_modules/@types/node')
+            ]
           }
         }
       })
