@@ -28,7 +28,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/');
@@ -49,7 +52,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus, { debug: true });
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/');
@@ -68,7 +74,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/?debug=true');
@@ -87,7 +96,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       // First request to populate lastCheck
@@ -108,7 +120,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/?simulate=unhealthy');
@@ -126,7 +141,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/?simulate=invalid');
@@ -151,7 +169,10 @@ describe('HTTP Integration', () => {
 
       // Test healthy (200)
       const healthyHandler = createHttpHealthCheckHandler(healthyMedicus);
-      const healthyServer = createServer(healthyHandler);
+      const healthyServer = createServer((req, res) => {
+        const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+        healthyHandler(searchParams, res);
+      });
       servers.push(healthyServer);
 
       const healthyResponse = await makeRequest(healthyServer, '/');
@@ -159,7 +180,10 @@ describe('HTTP Integration', () => {
 
       // Test degraded (200)
       const degradedHandler = createHttpHealthCheckHandler(degradedMedicus);
-      const degradedServer = createServer(degradedHandler);
+      const degradedServer = createServer((req, res) => {
+        const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+        degradedHandler(searchParams, res);
+      });
       servers.push(degradedServer);
 
       const degradedResponse = await makeRequest(degradedServer, '/');
@@ -167,7 +191,10 @@ describe('HTTP Integration', () => {
 
       // Test unhealthy (503)
       const unhealthyHandler = createHttpHealthCheckHandler(unhealthyMedicus);
-      const unhealthyServer = createServer(unhealthyHandler);
+      const unhealthyServer = createServer((req, res) => {
+        const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+        unhealthyHandler(searchParams, res);
+      });
       servers.push(unhealthyServer);
 
       const unhealthyResponse = await makeRequest(unhealthyServer, '/');
@@ -187,7 +214,10 @@ describe('HTTP Integration', () => {
           'X-Custom': 'test'
         }
       });
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/');
@@ -205,7 +235,10 @@ describe('HTTP Integration', () => {
       });
 
       const handleHealthCheck = createHttpHealthCheckHandler(medicus);
-      const server = createServer(handleHealthCheck);
+      const server = createServer((req, res) => {
+        const url = new URL(req.url || '/', `http://${req.headers.host}`);
+        handleHealthCheck(url.searchParams, res);
+      });
       servers.push(server);
 
       const response = await makeRequest(server, '/');
@@ -227,7 +260,8 @@ describe('HTTP Integration', () => {
 
       const server = createServer((req: IncomingMessage, res: ServerResponse) => {
         if (req.url?.startsWith('/health')) {
-          return handleHealthCheck(req, res);
+          const url = new URL(req.url, `http://${req.headers.host}`);
+          return handleHealthCheck(url.searchParams, res);
         }
         if (req.url === '/test') {
           res.end('test response');

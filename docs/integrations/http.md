@@ -19,7 +19,13 @@ const handleHealthCheck = createHttpHealthCheckHandler(medicus);
 
 const server = createServer((req, res) => {
   if (req.url?.startsWith('/health')) {
-    return handleHealthCheck(req, res);
+    // Preferred approach using URL constructor
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    return handleHealthCheck(url.searchParams, res);
+    
+    // Alternative: direct URLSearchParams parsing
+    // const searchParams = new URLSearchParams(req.url.split('?')[1] || '');
+    // return handleHealthCheck(searchParams, res);
   }
 
   // Handle other routes...
@@ -49,7 +55,8 @@ app.ready(() => {
 
   const server = createServer((req, res) => {
     if (req.url?.startsWith('/health')) {
-      return handleHealthCheck(req, res);
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      return handleHealthCheck(url.searchParams, res);
     }
   });
 });

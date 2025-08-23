@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { ServerResponse } from 'node:http';
 import type { Medicus } from '../medicus';
 import { parseHealthStatus, performHttpCheck } from '../utils/http';
 
@@ -13,7 +13,7 @@ export interface HttpHealthCheckOptions {
   /**
    * Custom response headers to include in health check responses
    *
-   * @default { 'Content-Type': 'application/json; charset=utf-8' }
+   * @default { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache, no-store, must-revalidate' }
    */
   headers?: Record<string, string>;
 }
@@ -43,51 +43,27 @@ export interface HttpHealthCheckOptions {
  *
  * const server = createServer((req, res) => {
  *   if (req.url?.startsWith('/health')) {
- *     return handleHealthCheck(req, res);
+ *     const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
+ *     return handleHealthCheck(url.searchParams, res);
  *   }
  *   // Handle other routes...
- * });
- * ```
- *
- * @example With Avvio
- * ```ts
- * import avvio from 'avvio';
- * import { createServer } from 'node:http';
- * import { avvioMedicusPlugin } from 'medicus/integrations/avvio';
- * import { createHttpHealthCheckHandler } from 'medicus/integrations/http';
- *
- * type Context = {
- *   medicus: AvvioMedicus<Context>;
- * };
- *
- * const app = avvio({} as Context);
- * app.use(avvioMedicusPlugin({}));
- *
- * app.ready(() => {
- *   const handleHealthCheck = createHttpHealthCheckHandler(app.medicus);
- *
- *   const server = createServer((req, res) => {
- *     if (req.url?.startsWith('/health')) {
- *       return handleHealthCheck(req, res);
- *     }
- *     // Other routes...
- *   });
  * });
  * ```
  */
 export function createHttpHealthCheckHandler<Ctx = void>(
   medicus: Medicus<Ctx>,
   options: HttpHealthCheckOptions = {}
-): (req: IncomingMessage, res: ServerResponse) => void {
+): (searchParams: URLSearchParams, res: ServerResponse) => void {
   options.debug ??= false;
-  options.headers ??= { 'content-type': 'application/json; charset=utf-8' };
+  options.headers ??= {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-cache, no-store, must-revalidate'
+  };
 
-  return (req: IncomingMessage, res: ServerResponse): void => {
-    const url = new URL(req.url || '', `http://${req.headers.host}`);
-
-    const last = !!url.searchParams.get('last');
-    const debug = !!url.searchParams.get('debug') || !!options.debug;
-    const simulate = parseHealthStatus(url.searchParams.get('simulate'));
+  return (searchParams: URLSearchParams, res: ServerResponse): void => {
+    const last = !!searchParams.get('last');
+    const debug = !!searchParams.get('debug') || !!options.debug;
+    const simulate = parseHealthStatus(searchParams.get('simulate'));
 
     // Since performHttpCheck never throws, we can safely ignore errors here
     void performHttpCheck(medicus, debug, last, simulate).then((check) => {
