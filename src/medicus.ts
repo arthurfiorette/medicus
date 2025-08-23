@@ -194,9 +194,11 @@ export class Medicus<Ctx = void> {
   }
 
   /**
-   * Performs a health check and returns the result
+   * Performs a health check and returns the result.
    *
    * - `debug` defaults to `false`
+   *
+   * **This function never throws**
    */
   async performCheck(debug = false): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
@@ -205,6 +207,8 @@ export class Medicus<Ctx = void> {
     for await (const [serviceName, result] of Array.from(this.checkers, this.mapChecker, this)) {
       if (result.status === HealthStatus.UNHEALTHY) {
         status = HealthStatus.UNHEALTHY;
+      } else if (result.status === HealthStatus.DEGRADED && status !== HealthStatus.UNHEALTHY) {
+        status = HealthStatus.DEGRADED;
       }
 
       services[serviceName] = result;

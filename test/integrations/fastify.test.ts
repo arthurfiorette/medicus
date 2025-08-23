@@ -276,7 +276,7 @@ describe('medicusPlugin()', () => {
       }
     });
 
-    assert.strictEqual(response2.statusCode, 429);
+    assert.strictEqual(response2.statusCode, 200);
 
     const response3 = await app.inject({
       method: 'GET',

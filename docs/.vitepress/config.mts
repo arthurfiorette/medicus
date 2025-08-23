@@ -165,6 +165,10 @@ export default defineConfig({
             link: 'node.md'
           },
           {
+            text: 'HTTP',
+            link: 'http.md'
+          },
+          {
             text: 'Fastify',
             link: 'fastify.md'
           },
