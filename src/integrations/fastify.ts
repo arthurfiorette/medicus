@@ -3,7 +3,7 @@ import fp from 'fastify-plugin';
 import { Medicus } from '../medicus';
 import { HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
-import { HttpStatuses, healthStatusToHttpStatus } from '../utils/http';
+import { HttpStatuses, parseHealthStatus, performHttpCheck } from '../utils/http';
 import { pinoMedicusPlugin } from './pino';
 
 declare module 'fastify' {
@@ -101,24 +101,22 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
           otel: false
         },
         async handler(request, reply): Promise<HealthCheckResult> {
-          let result: HealthCheckResult | null = null;
-
           const isDebug = typeof debug === 'boolean' ? debug : await debug(request);
 
           //@ts-expect-error - untyped from querystring
-          if (request.query.last) {
-            result = this.medicus.getLastCheck(isDebug);
-          }
-
-          if (!result) {
-            result = await this.medicus.performCheck(isDebug);
-          }
+          const queryLast = !!request.query.last;
 
           //@ts-expect-error - untyped from querystring
-          if (request.query.simulate) result.status = request.query.simulate;
+          const simulate = parseHealthStatus(request.query.simulate);
 
-          reply.status(healthStatusToHttpStatus(result.status));
+          const { result, status } = await performHttpCheck(
+            this.medicus,
+            isDebug,
+            queryLast,
+            simulate
+          );
 
+          reply.status(status);
           return result;
         }
       });

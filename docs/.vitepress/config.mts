@@ -48,7 +48,10 @@ export default defineConfig({
               medicus: ['./index.ts'],
               'medicus/*': ['./integrations/*']
             },
-            types: [path.resolve('docs/.vitepress/globals.d.ts')]
+            types: [
+              path.resolve('docs/.vitepress/globals.d.ts'),
+              path.resolve('node_modules/@types/node')
+            ]
           }
         }
       })
@@ -163,6 +166,10 @@ export default defineConfig({
           {
             text: 'Node',
             link: 'node.md'
+          },
+          {
+            text: 'HTTP',
+            link: 'http.md'
           },
           {
             text: 'Fastify',

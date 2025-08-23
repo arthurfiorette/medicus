@@ -1,5 +1,8 @@
 import type { Medicus } from '../../src';
 
+// Import Node.js types for Twoslash
+/// <reference types="node" />
+
 declare global {
   /**
    * Sample of application used in this documentation
