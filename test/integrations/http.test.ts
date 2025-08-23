@@ -38,6 +38,7 @@ describe('HTTP Integration', () => {
 
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['content-type'], 'application/json; charset=utf-8');
+      assert.equal(response.headers['cache-control'], 'no-cache, no-store, must-revalidate');
 
       const body = JSON.parse(response.body);
       assert.equal(body.status, 'healthy');

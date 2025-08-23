@@ -39,6 +39,6 @@ const server = createServer((req, res) => {
 ```ts
 interface HttpHealthCheckOptions {
   debug?: boolean; // Include debug info by default
-  headers?: Record<string, string>; // Custom headers
+  headers?: Record<string, string>; // Custom headers (includes cache prevention by default)
 }
 ```

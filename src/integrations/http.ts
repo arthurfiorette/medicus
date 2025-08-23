@@ -19,6 +19,34 @@ export interface HttpHealthCheckOptions {
 }
 
 /**
+ * HTTP health check handler function type.
+ *
+ * Takes URL search parameters and a server response object, and handles the complete
+ * health check request/response cycle including query parameter parsing, health check
+ * execution, and response formatting.
+ *
+ * @param searchParams - URL search parameters containing optional `debug`, `last`, and `simulate` parameters
+ * @param res - Node.js ServerResponse object to write the health check result to
+ * @returns Promise that resolves when the response has been written (never rejects)
+ *
+ * @example
+ * ```ts
+ * const handler = createHttpHealthCheckHandler(medicus);
+ *
+ * // Usage in HTTP server
+ * const server = createServer((req, res) => {
+ *   const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
+ *   await handler(url.searchParams, res);
+ * });
+ * ```
+ */
+export type HttpHealthCheckHandler = (
+  this: void,
+  searchParams: URLSearchParams,
+  res: ServerResponse
+) => Promise<void>;
+
+/**
  * Creates a complete HTTP health check request handler that parses query parameters
  * and handles the full request/response cycle.
  *
@@ -53,21 +81,20 @@ export interface HttpHealthCheckOptions {
 export function createHttpHealthCheckHandler<Ctx = void>(
   medicus: Medicus<Ctx>,
   options: HttpHealthCheckOptions = {}
-): (searchParams: URLSearchParams, res: ServerResponse) => void {
-  options.debug ??= false;
-  options.headers ??= {
+): HttpHealthCheckHandler {
+  const defaultDebug = !!options.debug || false;
+  const defaultHeaders = {
     'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-cache, no-store, must-revalidate'
+    'cache-control': 'no-cache, no-store, must-revalidate',
+    ...options.headers
   };
 
-  return (searchParams: URLSearchParams, res: ServerResponse): void => {
+  return async function httpHealthCheckHandler(searchParams, res) {
     const last = !!searchParams.get('last');
-    const debug = !!searchParams.get('debug') || !!options.debug;
+    const debug = !!searchParams.get('debug') || defaultDebug;
     const simulate = parseHealthStatus(searchParams.get('simulate'));
 
-    // Since performHttpCheck never throws, we can safely ignore errors here
-    void performHttpCheck(medicus, debug, last, simulate).then((check) => {
-      res.writeHead(check.status, options.headers).end(JSON.stringify(check.result));
-    });
+    const check = await performHttpCheck(medicus, debug, last, simulate);
+    res.writeHead(check.status, defaultHeaders).end(JSON.stringify(check.result));
   };
 }
