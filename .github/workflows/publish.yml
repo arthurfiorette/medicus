@@ -6,15 +6,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
+  id-token: write # Required for OIDC
+  contents: read
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
+    environment:
+      name: NPM Registry
+      url: https://www.npmjs.com/package/medicus
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
@@ -35,10 +40,5 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Generate files
-        run: pnpm run generate
-
-      - name: Publish to NPM
-        run: pnpm publish --access public --no-git-checks --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to NPM # OIDC authentication
+        run: pnpm publish --access public --no-git-checks
