@@ -31,7 +31,6 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
-          registry-url: 'https://registry.npmjs.org/'
           cache: 'pnpm'
 
       - name: Install packages
@@ -41,4 +40,7 @@ jobs:
         run: pnpm run build
 
       - name: Publish to NPM # OIDC authentication
-        run: pnpm publish --access public --no-git-checks --verbose
+        run: pnpm publish --access public --no-git-checks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true

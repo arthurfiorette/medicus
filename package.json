@@ -71,11 +71,6 @@
       "optional": true
     }
   },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/",
-    "provenance": true
-  },
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=18"
