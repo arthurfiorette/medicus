@@ -15,4 +15,9 @@ declare global {
    * Your medicus own instance
    */
   var medicus: Medicus<YourContext>;
+
+  /**
+   * Function that performs a slow check (e.g., database connectivity)
+   */
+  function performSlowCheck(): Promise<void>;
 }

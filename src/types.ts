@@ -149,6 +149,16 @@ export interface BaseMedicusOption<Ctx = void> {
   eagerBackgroundCheck?: boolean;
 
   /**
+   * The maximum time in milliseconds a checker is allowed to run before being considered
+   * unhealthy.
+   *
+   * A `TimeoutUnhealthyCheck` will be used for the result of the checker if it times out.
+   *
+   * @default 5000
+   */
+  checkerTimeoutMs?: number;
+
+  /**
    * Called for every generated background check result.
    *
    * Some non-exposed systems, instead of providing as a API to be called by third-party

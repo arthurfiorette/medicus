@@ -7,6 +7,26 @@ A **Checker** is a function responsible for assessing the health of a specific s
 - A value from the `HealthStatus` enum
 - A `DetailedHealthCheck` (for a more detailed response)
 
+## Timeout Protection
+
+By default, checkers have a timeout of **5 seconds** to complete their execution. If a checker exceeds this timeout, it will be automatically marked as `UNHEALTHY` with a timeout error in the debug information. This prevents slow or hanging checkers from blocking your health check process.
+
+You can customize the timeout duration by setting the `checkerTimeoutMs` option when creating a Medicus instance:
+
+```ts
+import { Medicus } from 'medicus';
+
+const medicus = new Medicus({
+  checkerTimeoutMs: 10_000, // 10 seconds
+  checkers: {
+    slowService(ctx) {
+      // This checker has up to 10 seconds to complete
+      return performSlowCheck();
+    }
+  }
+});
+```
+
 ## Throwing Errors
 
 To indicate that a service is unhealthy, you can throw an error inside your checker function. This method only signals failure (unhealthy state) and does not support the `DEGRADED` status.

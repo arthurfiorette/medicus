@@ -495,4 +495,122 @@ describe('Medicus', () => {
     assert.strictEqual(checkers.length, 3);
     assert.strictEqual(medicus.countCheckers(), 3);
   });
+
+  test('checker times out', async () => {
+    using medicus = new Medicus({
+      checkerTimeoutMs: 500,
+      checkers: {
+        async slowChecker() {
+          await setTimeout(600);
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.UNHEALTHY,
+      services: {
+        slowChecker: {
+          status: HealthStatus.UNHEALTHY,
+          debug: {
+            timeout: true,
+            error: 'Health check timed out'
+          }
+        }
+      }
+    });
+  });
+
+  test('checker respects custom timeout from constructor', async () => {
+    using medicus = new Medicus({
+      checkerTimeoutMs: 100,
+      checkers: {
+        async slowChecker() {
+          await setTimeout(200);
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.UNHEALTHY,
+      services: {
+        slowChecker: {
+          status: HealthStatus.UNHEALTHY,
+          debug: {
+            timeout: true,
+            error: 'Health check timed out'
+          }
+        }
+      }
+    });
+  });
+
+  test('checker completes before timeout', async () => {
+    using medicus = new Medicus({
+      checkerTimeoutMs: 1000,
+      checkers: {
+        async fastChecker() {
+          await setTimeout(50);
+          return HealthStatus.HEALTHY;
+        }
+      }
+    });
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.HEALTHY,
+      services: {
+        fastChecker: {
+          status: HealthStatus.HEALTHY
+        }
+      }
+    });
+  });
+
+  test('multiple checkers with mixed timeout behavior', async () => {
+    using medicus = new Medicus({
+      checkerTimeoutMs: 200,
+      checkers: {
+        async fastChecker() {
+          await setTimeout(50);
+          return HealthStatus.HEALTHY;
+        },
+        async slowChecker() {
+          await setTimeout(300);
+          return HealthStatus.HEALTHY;
+        },
+        async mediumChecker() {
+          await setTimeout(100);
+          return HealthStatus.DEGRADED;
+        }
+      }
+    });
+
+    const result = await medicus.performCheck(true);
+
+    assert.deepStrictEqual(result, {
+      status: HealthStatus.UNHEALTHY,
+      services: {
+        fastChecker: {
+          status: HealthStatus.HEALTHY
+        },
+        slowChecker: {
+          status: HealthStatus.UNHEALTHY,
+          debug: {
+            timeout: true,
+            error: 'Health check timed out'
+          }
+        },
+        mediumChecker: {
+          status: HealthStatus.DEGRADED
+        }
+      }
+    });
+  });
 });

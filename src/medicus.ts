@@ -1,3 +1,4 @@
+import timers from 'node:timers/promises';
 import {
   type BackgroundCheckListener,
   type DetailedHealthCheck,
@@ -8,6 +9,7 @@ import {
   type MedicusErrorLogger,
   type MedicusOption
 } from './types';
+import { TimeoutUnhealthyCheck } from './utils/constants';
 import { defaultErrorLogger } from './utils/logger';
 
 /**
@@ -66,6 +68,16 @@ export class Medicus<Ctx = void> {
   public errorLogger: MedicusErrorLogger | undefined;
 
   /**
+   * The maximum time in milliseconds a checker is allowed to run before being considered
+   * unhealthy.
+   *
+   * A `TimeoutUnhealthyCheck` will be used for the result of the checker if it times out.
+   *
+   * @default 5000
+   */
+  public checkerTimeoutMs = 5_000;
+
+  /**
    * The last health check result, this is updated every time a health check is run and
    * can be accessed with `getLastCheck`> This value can can be changed at any time.
    */
@@ -115,6 +127,10 @@ export class Medicus<Ctx = void> {
 
     if (options.backgroundCheckInterval) {
       this.startBackgroundCheck(options.backgroundCheckInterval);
+    }
+
+    if (options.checkerTimeoutMs) {
+      this.checkerTimeoutMs = options.checkerTimeoutMs;
     }
 
     if (options.eagerBackgroundCheck) {
@@ -235,7 +251,11 @@ export class Medicus<Ctx = void> {
    */
   protected async executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
     try {
-      const check = await checker(this.context);
+      const check = await Promise.race([
+        checker(this.context),
+        // Un-references the timer so it doesn't keep the process running
+        timers.setTimeout(this.checkerTimeoutMs, TimeoutUnhealthyCheck, { ref: false })
+      ]);
 
       switch (typeof check) {
         case 'string':
