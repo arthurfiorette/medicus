@@ -1,16 +1,24 @@
 {
   "name": "medicus",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A flexible and agnostic health check library for Node.js.",
   "bugs": {
     "url": "https://github.com/arthurfiorette/medicus/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/arthurfiorette/medicus.git"
+    "url": "git+https://github.com/arthurfiorette/medicus.git"
   },
+  "funding": "https://github.com/arthurfiorette/medicus?sponsor=1",
   "license": "MIT",
   "author": "Arthur Fiorette <me@arthur.place>",
+  "contributors": [
+    {
+      "name": "Gabriel Alves",
+      "email": "alv7contato@outlook.com",
+      "url": "https://alvseven.com"
+    }
+  ],
   "sideEffects": false,
   "type": "commonjs",
   "main": "dist/index.js",
