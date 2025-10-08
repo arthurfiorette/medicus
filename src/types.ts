@@ -46,10 +46,23 @@ export interface HealthCheckResult {
   services: Record<string, DetailedHealthCheck>;
 }
 
-/** A health check function that can be used to check if a part of the system is healthy */
+/**
+ * A health check function that can be used to check if a part of the system is healthy
+ *
+ * @param ctx - The context object passed to all checkers
+ * @param signal - An AbortSignal that will be aborted when the checker exceeds the configured timeout.
+ *                 Use this signal to gracefully cancel long-running operations.
+ *
+ * @returns One of the following:
+ * - `void` - Indicates healthy status
+ * - `HealthStatus` - Explicit health status (HEALTHY, DEGRADED, or UNHEALTHY)
+ * - `DetailedHealthCheck` - Health status with additional debug information
+ * - A Promise resolving to any of the above
+ */
 export type HealthChecker<Ctx = void> = (
   this: void,
-  ctx: Ctx
+  ctx: Ctx,
+  signal: AbortSignal
 ) =>
   | void
   | HealthStatus

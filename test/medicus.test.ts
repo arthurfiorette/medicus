@@ -500,8 +500,9 @@ describe('Medicus', () => {
     using medicus = new Medicus({
       checkerTimeoutMs: 500,
       checkers: {
-        async slowChecker() {
+        async slowChecker(_ctx, signal) {
           await setTimeout(600);
+          assert.ok(signal.aborted, 'Signal should be aborted after timeout');
           return HealthStatus.HEALTHY;
         }
       }
@@ -527,8 +528,9 @@ describe('Medicus', () => {
     using medicus = new Medicus({
       checkerTimeoutMs: 100,
       checkers: {
-        async slowChecker() {
+        async slowChecker(_ctx, signal) {
           await setTimeout(200);
+          assert.ok(signal.aborted, 'Signal should be aborted after custom timeout');
           return HealthStatus.HEALTHY;
         }
       }
@@ -554,8 +556,9 @@ describe('Medicus', () => {
     using medicus = new Medicus({
       checkerTimeoutMs: 1000,
       checkers: {
-        async fastChecker() {
+        async fastChecker(_ctx, signal) {
           await setTimeout(50);
+          assert.ok(!signal.aborted, 'Signal should not be aborted when completing before timeout');
           return HealthStatus.HEALTHY;
         }
       }
@@ -577,16 +580,19 @@ describe('Medicus', () => {
     using medicus = new Medicus({
       checkerTimeoutMs: 200,
       checkers: {
-        async fastChecker() {
+        async fastChecker(_ctx, signal) {
           await setTimeout(50);
+          assert.ok(!signal.aborted, 'Fast checker signal should not be aborted');
           return HealthStatus.HEALTHY;
         },
-        async slowChecker() {
+        async slowChecker(_ctx, signal) {
           await setTimeout(300);
+          assert.ok(signal.aborted, 'Slow checker signal should be aborted');
           return HealthStatus.HEALTHY;
         },
-        async mediumChecker() {
+        async mediumChecker(_ctx, signal) {
           await setTimeout(100);
+          assert.ok(!signal.aborted, 'Medium checker signal should not be aborted');
           return HealthStatus.DEGRADED;
         }
       }

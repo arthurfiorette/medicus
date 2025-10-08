@@ -1,4 +1,4 @@
-import timers from 'node:timers/promises';
+import { once } from 'node:events';
 import {
   type BackgroundCheckListener,
   type DetailedHealthCheck,
@@ -250,11 +250,13 @@ export class Medicus<Ctx = void> {
    * **This function never throws**
    */
   protected async executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
+    const signal = AbortSignal.timeout(this.checkerTimeoutMs);
+
     try {
       const check = await Promise.race([
-        checker(this.context),
-        // Un-references the timer so it doesn't keep the process running
-        timers.setTimeout(this.checkerTimeoutMs, TimeoutUnhealthyCheck, { ref: false })
+        checker(this.context, signal),
+        // Listens for the abort event to return the timeout result
+        once(signal, 'abort').then(() => TimeoutUnhealthyCheck)
       ]);
 
       switch (typeof check) {
@@ -266,6 +268,11 @@ export class Medicus<Ctx = void> {
           return { status: HealthStatus.HEALTHY };
       }
     } catch (error) {
+      // Should never reach here because of the promise.race above, but jic
+      if (signal.aborted) {
+        return TimeoutUnhealthyCheck;
+      }
+
       this.errorLogger?.(error, checker.name);
 
       return {
