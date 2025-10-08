@@ -40,8 +40,8 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: debug
-        run: npm whoami || echo "Not logged in"
+      - name: Update NPM
+        run: npm i -g npm@latest
 
       - name: Publish to NPM # OIDC authentication
         run: npm publish --access public --provenance
