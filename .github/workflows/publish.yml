@@ -41,7 +41,7 @@ jobs:
         run: pnpm run build
 
       - name: debug
-        run: pnpm whoami
+        run: npm whoami || echo "Not logged in"
 
       - name: Publish to NPM # OIDC authentication
-        run: pnpm publish --access public --no-git-checks --provenance
+        run: npm publish --access public --provenance
