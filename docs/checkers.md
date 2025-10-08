@@ -21,7 +21,7 @@ Each checker receives an `AbortSignal` as its second parameter that is aborted w
 ```ts
 import { Medicus, HealthStatus } from 'medicus';
 
-const medicus = new Medicus({
+const medicus = new Medicus<any>({
   checkerTimeoutMs: 10_000, // 10 seconds (default is 5 seconds)
   checkers: {
     async database(ctx, signal) {
