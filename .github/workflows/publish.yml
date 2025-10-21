@@ -40,8 +40,11 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Generate
+        run: pnpm run generate
+
       - name: Update NPM
         run: npm i -g npm@latest
 
       - name: Publish to NPM # OIDC authentication
-        run: npm publish --access public --provenance
+        run: pnpm publish --access public --no-git-checks --provenance
