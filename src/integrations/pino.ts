@@ -9,5 +9,9 @@ export const pinoMedicusPlugin = definePlugin<BaseLogger>((pino) => ({
     options.errorLogger = function pinoErrorLogger(error: any, checkerName) {
       return pino.error(error, `Health check failed for ${checkerName}`);
     };
+
+    options.unhealthyLogger = function pinoUnhealthyLogger(details) {
+      return pino.fatal(details.services, `System is ${details.status}`);
+    };
   }
 }));

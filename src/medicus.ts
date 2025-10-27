@@ -7,7 +7,8 @@ import {
   type HealthCheckResult,
   HealthStatus,
   type MedicusErrorLogger,
-  type MedicusOption
+  type MedicusOption,
+  type MedicusUnhealthyLogger
 } from './types';
 import { TimeoutUnhealthyCheck } from './utils/constants';
 import { defaultErrorLogger } from './utils/logger';
@@ -68,6 +69,11 @@ export class Medicus<Ctx = void> {
   public errorLogger: MedicusErrorLogger | undefined;
 
   /**
+   * The unhealthy logger function that will be called whenever an unhealthy status is detected.
+   */
+  public unhealthyLogger: MedicusUnhealthyLogger | undefined;
+
+  /**
    * The maximum time in milliseconds a checker is allowed to run before being considered
    * unhealthy.
    *
@@ -107,6 +113,7 @@ export class Medicus<Ctx = void> {
     }
 
     this.errorLogger = options.errorLogger || defaultErrorLogger;
+    this.unhealthyLogger = options.unhealthyLogger;
 
     if (options.onBackgroundCheck) {
       this.onBackgroundCheck = options.onBackgroundCheck;
@@ -235,6 +242,11 @@ export class Medicus<Ctx = void> {
       status,
       services
     };
+
+    //
+    if (this.unhealthyLogger && status !== HealthStatus.HEALTHY) {
+      this.unhealthyLogger(this.lastCheck);
+    }
 
     return this.getLastCheck(debug)!;
   }

@@ -74,6 +74,9 @@ export type HealthChecker<Ctx = void> = (
 /** Function signature for the error logger */
 export type MedicusErrorLogger = (error: unknown, checkerName: string) => void;
 
+/** Function signature for the unhealthy logger. `details === this.lastCheck` */
+export type MedicusUnhealthyLogger = (details: HealthCheckResult) => void;
+
 export type HealthCheckerMap<Ctx> = {
   /**
    * A checker function that will be executed on every health check request to determine
@@ -133,6 +136,11 @@ export interface BaseMedicusOption<Ctx = void> {
    * with `onBackgroundCheck` as the `checkerName`
    */
   errorLogger?: MedicusErrorLogger;
+
+  /**
+   * The unhealthy logger function that will be called whenever an unhealthy status is detected.
+   */
+  unhealthyLogger?: MedicusUnhealthyLogger;
 
   /**
    * By default {@linkcode Medicus.performCheck} needs to be called manually to perform a

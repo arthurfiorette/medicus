@@ -341,7 +341,7 @@ function makeRequest(server: Server, path: string): Promise<TestResponse> {
   });
 }
 
-let portCounter = 3000;
+let portCounter = 51123;
 function getAvailablePort(): number {
   return portCounter++;
 }

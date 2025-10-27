@@ -60,7 +60,7 @@ const medicus = new Medicus({
 
 The above example will log the check object every time a background check is performed, i.e., every 60 seconds.
 
-If an error is thrown inside the event listener, it will be captured and sent to the [`errorLogger`](./error-logger.md), if one has been configured.
+If an error is thrown inside the event listener, it will be captured and sent to the [`errorLogger`](./logger.md#error-logger), if one has been configured.
 
 ## `setTimeout` vs `setInterval`
 

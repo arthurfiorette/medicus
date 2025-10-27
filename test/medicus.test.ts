@@ -274,6 +274,118 @@ describe('Medicus', () => {
     assert.strictEqual(loggedError.checkerName, 'alwaysFails');
   });
 
+  it('calls unhealthyLogger when status is UNHEALTHY', async () => {
+    let loggedDetails: any = null;
+
+    using medicus = new Medicus({
+      checkers: {
+        failing() {
+          return HealthStatus.UNHEALTHY;
+        }
+      },
+      unhealthyLogger: (details) => {
+        loggedDetails = details;
+      }
+    });
+
+    await medicus.performCheck(true);
+
+    assert(loggedDetails !== null);
+    assert.strictEqual(loggedDetails.status, HealthStatus.UNHEALTHY);
+    assert.deepStrictEqual(loggedDetails.services, {
+      failing: { status: HealthStatus.UNHEALTHY }
+    });
+  });
+
+  it('calls unhealthyLogger when status is DEGRADED', async () => {
+    let loggedDetails: any = null;
+
+    using medicus = new Medicus({
+      checkers: {
+        degraded() {
+          return HealthStatus.DEGRADED;
+        }
+      },
+      unhealthyLogger: (details) => {
+        loggedDetails = details;
+      }
+    });
+
+    await medicus.performCheck(true);
+
+    assert(loggedDetails !== null);
+    assert.strictEqual(loggedDetails.status, HealthStatus.DEGRADED);
+    assert.deepStrictEqual(loggedDetails.services, {
+      degraded: { status: HealthStatus.DEGRADED }
+    });
+  });
+
+  it('does not call unhealthyLogger when status is HEALTHY', async () => {
+    let loggedDetails: any = null;
+
+    using medicus = new Medicus({
+      checkers: {
+        healthy() {
+          return HealthStatus.HEALTHY;
+        }
+      },
+      unhealthyLogger: (details) => {
+        loggedDetails = details;
+      }
+    });
+
+    await medicus.performCheck(true);
+
+    assert.strictEqual(loggedDetails, null);
+  });
+
+  it('calls unhealthyLogger with all service details', async () => {
+    let loggedDetails: any = null;
+
+    using medicus = new Medicus({
+      checkers: {
+        healthyService() {
+          return HealthStatus.HEALTHY;
+        },
+        degradedService() {
+          return {
+            status: HealthStatus.DEGRADED,
+            debug: {
+              reason: 'slow response'
+            }
+          };
+        },
+        unhealthyService() {
+          return {
+            status: HealthStatus.UNHEALTHY,
+            debug: {
+              reason: 'connection failed'
+            }
+          };
+        }
+      },
+      unhealthyLogger: (details) => {
+        loggedDetails = details;
+      }
+    });
+
+    await medicus.performCheck(true);
+
+    assert(loggedDetails !== null);
+    assert.strictEqual(loggedDetails.status, HealthStatus.UNHEALTHY);
+    assert.deepStrictEqual(loggedDetails.services.healthyService, {
+      status: HealthStatus.HEALTHY
+    });
+    assert.deepStrictEqual(loggedDetails.services.degradedService, {
+      status: HealthStatus.DEGRADED,
+      debug: { reason: 'slow response' }
+    });
+    assert.deepStrictEqual(loggedDetails.services.unhealthyService, {
+      status: HealthStatus.UNHEALTHY,
+      debug: { reason: 'connection failed' }
+    });
+  });
+
   it('hides information when debug=false', async () => {
     using medicus = new Medicus({
       checkers: {

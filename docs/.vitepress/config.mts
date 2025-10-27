@@ -141,8 +141,8 @@ export default defineConfig({
             link: 'checkers.md'
           },
           {
-            text: 'Error logger',
-            link: 'error-logger.md'
+            text: 'Logger',
+            link: 'logger.md'
           },
           {
             text: 'Debug view',
