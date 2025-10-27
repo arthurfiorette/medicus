@@ -10,7 +10,7 @@
 
 <p align="center" title="Medicus's logo">
   <a href="https://medicus.js.org" target="_blank" rel="noopener noreferrer">
-    <img src="docs/public/medicus.svg" width="180" alt="Medicus logo" />
+    <img src="https://medicus.js.org/medicus.svg" width="180" alt="Medicus logo" />
   </a>
 </p>
 
