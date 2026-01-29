@@ -6,6 +6,7 @@ import { createNextApiHealthCheckHandler } from '../../src/integrations/nextjs';
 // Mock Next.js types for testing
 interface MockNextApiRequest {
   query: Record<string, string | string[] | undefined>;
+  headers?: Record<string, string>;
 }
 
 interface MockNextApiResponse {
@@ -329,6 +330,142 @@ describe('Next.js Integration', () => {
 
       assert.equal(res.headers['content-type'], 'application/json; charset=utf-8');
       assert.equal(res.headers['cache-control'], 'no-cache, no-store, must-revalidate');
+    });
+
+    it('creates handler from options object directly', async () => {
+      const handler = createNextApiHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        }
+      });
+
+      const req: MockNextApiRequest = { query: { debug: 'true' } };
+      const res = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req, res);
+
+      assert.equal(res.statusCode, 200);
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.status, 'healthy');
+      //@ts-expect-error - body is unknown
+      assert.ok(res.body.services.test);
+    });
+
+    it('supports debug detector function', async () => {
+      const handler = createNextApiHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        },
+        debug: (req) => {
+          //@ts-expect-error - mock types
+          return req.headers?.authorization === 'Bearer secret';
+        }
+      });
+
+      // Without auth header - no debug (services should be empty)
+      const req1: MockNextApiRequest = { query: {} };
+      //@ts-expect-error - add headers to mock
+      req1.headers = {};
+      const res1 = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req1, res1);
+
+      //@ts-expect-error - body is unknown
+      assert.equal(res1.body.status, 'healthy');
+      // When debug is false, services is empty
+      //@ts-expect-error - body is unknown
+      assert.equal(Object.keys(res1.body.services).length, 0);
+
+      // With auth header - show debug
+      const req2: MockNextApiRequest = { query: {} };
+      //@ts-expect-error - add headers to mock
+      req2.headers = { authorization: 'Bearer secret' };
+      const res2 = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req2, res2);
+
+      //@ts-expect-error - body is unknown
+      assert.equal(res2.body.status, 'healthy');
+      //@ts-expect-error - body is unknown
+      assert.equal(res2.body.services.test.debug.key, 'value');
+    });
+
+    it('query debug parameter overrides debug detector', async () => {
+      const handler = createNextApiHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        },
+        debug: false // Debug disabled by default
+      });
+
+      const req: MockNextApiRequest = { query: { debug: 'true' } };
+      const res = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req, res);
+
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.status, 'healthy');
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.services.test.debug.key, 'value');
+    });
+
+    it('supports background checks with options object', async () => {
+      let checkCount = 0;
+      const handler = createNextApiHealthCheckHandler({
+        checkers: {
+          test: () => {
+            checkCount++;
+            return HealthStatus.HEALTHY;
+          }
+        },
+        backgroundCheckInterval: 100,
+        eagerBackgroundCheck: true
+      });
+
+      // Wait for background check to run
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const req: MockNextApiRequest = { query: { last: 'true' } };
+      const res = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req, res);
+
+      // Background check should have run
+      assert.ok(checkCount > 0);
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.status, 'healthy');
+    });
+
+    it('supports async debug detector function', async () => {
+      const handler = createNextApiHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        },
+        debug: async (req) => {
+          // Simulate async auth check
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          //@ts-expect-error - mock types
+          return req.headers?.authorization === 'Bearer secret';
+        }
+      });
+
+      const req: MockNextApiRequest = { query: {} };
+      //@ts-expect-error - add headers to mock
+      req.headers = { authorization: 'Bearer secret' };
+      const res = createMockResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req, res);
+
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.status, 'healthy');
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.services.test.debug.key, 'value');
     });
   });
 });

@@ -13,7 +13,21 @@ npm install --save-dev next
 
 ## Basic Usage
 
-Create a health check API route in your Next.js application:
+Create a health check API route in your Next.js application. You can pass options directly:
+
+```ts
+// pages/api/health.ts
+import { HealthStatus } from 'medicus';
+import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+
+export default createNextApiHealthCheckHandler({
+  checkers: {
+    database: () => HealthStatus.HEALTHY
+  }
+});
+```
+
+Or use a pre-created Medicus instance:
 
 ```ts
 // pages/api/health.ts
@@ -54,10 +68,10 @@ The handler supports the following query parameters:
 
 ```ts
 // pages/api/health.ts
-import { Medicus, HealthStatus } from 'medicus';
+import { HealthStatus } from 'medicus';
 import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
 
-const medicus = new Medicus({
+export default createNextApiHealthCheckHandler({
   checkers: {
     database: () => ({
       status: HealthStatus.HEALTHY,
@@ -68,8 +82,6 @@ const medicus = new Medicus({
     })
   }
 });
-
-export default createNextApiHealthCheckHandler(medicus);
 ```
 
 Calling `/api/health?debug=true` will return:
@@ -91,17 +103,68 @@ Calling `/api/health?debug=true` will return:
 
 ## Configuration Options
 
+The `debug` option controls whether to show debug information in the response. It can be:
+
+- **`boolean`** - Enable/disable debug output for all requests
+- **`function`** - A function `(req: NextApiRequest) => boolean | Promise<boolean>` that receives the request and returns whether to show debug info
+
 ```ts
 interface NextApiHealthCheckOptions {
-  debug?: boolean; // Include debug info by default
+  debug?: boolean | ((req: NextApiRequest) => boolean | Promise<boolean>);
 }
 ```
 
 ### Enable Debug by Default
 
 ```ts
-export default createNextApiHealthCheckHandler(medicus, {
+export default createNextApiHealthCheckHandler({
+  checkers: {
+    database: () => HealthStatus.HEALTHY
+  },
   debug: true
+});
+```
+
+### Conditional Debug Based on Authentication
+
+You can use a function to conditionally show debug information based on request properties like authentication:
+
+```ts
+// pages/api/health.ts
+import { HealthStatus } from 'medicus';
+import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+
+export default createNextApiHealthCheckHandler({
+  checkers: {
+    database: () => ({
+      status: HealthStatus.HEALTHY,
+      debug: {
+        connections: 10,
+        maxConnections: 100
+      }
+    })
+  },
+  debug: (req) => {
+    // Only show debug info if authorized
+    return req.headers.authorization === 'Bearer secret-token';
+  }
+});
+```
+
+This is useful for protecting sensitive debug information in production while still allowing authorized users to access it.
+
+You can also use async functions:
+
+```ts
+export default createNextApiHealthCheckHandler({
+  checkers: {
+    database: () => HealthStatus.HEALTHY
+  },
+  debug: async (req) => {
+    // Async auth check
+    const user = await validateToken(req.headers.authorization);
+    return user?.role === 'admin';
+  }
 });
 ```
 
@@ -111,12 +174,12 @@ Here's a complete example with multiple health checkers:
 
 ```ts
 // pages/api/health.ts
-import { Medicus, HealthStatus } from 'medicus';
+import { HealthStatus } from 'medicus';
 import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
 import { checkDatabase } from '@/lib/db';
 import { checkRedis } from '@/lib/redis';
 
-const medicus = new Medicus({
+export default createNextApiHealthCheckHandler({
   checkers: {
     async database() {
       try {
@@ -144,37 +207,48 @@ const medicus = new Medicus({
     }
   }
 });
-
-export default createNextApiHealthCheckHandler(medicus);
 ```
 
 ## Background Checks
 
-You can combine the Next.js handler with background health checks to improve response times:
+You can configure background health checks directly in the options:
 
 ```ts
 // pages/api/health.ts
-import { Medicus, HealthStatus } from 'medicus';
+import { HealthStatus } from 'medicus';
 import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
 
-const medicus = new Medicus({
+export default createNextApiHealthCheckHandler({
   checkers: {
     database: async () => {
       // Expensive check
       await checkDatabase();
       return HealthStatus.HEALTHY;
     }
-  }
+  },
+  // Run checks every 30 seconds in the background
+  backgroundCheckInterval: 30000,
+  // Run first check immediately on startup
+  eagerBackgroundCheck: true
 });
-
-// Run checks every 30 seconds in the background
-medicus.startBackgroundCheck(30000);
-
-// Requests can use ?last=true to get cached results instantly
-export default createNextApiHealthCheckHandler(medicus);
 ```
 
 Now you can call `/api/health?last=true` to get instant responses from the cache.
+
+Alternatively, if you're using a pre-created Medicus instance:
+
+```ts
+const medicus = new Medicus({
+  checkers: {
+    database: () => HealthStatus.HEALTHY
+  }
+});
+
+// Start background checks manually
+medicus.startBackgroundCheck(30000);
+
+export default createNextApiHealthCheckHandler(medicus);
+```
 
 ## Status Codes
 
