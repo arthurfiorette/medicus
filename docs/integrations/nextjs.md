@@ -1,15 +1,6 @@
-# Next.js Integration
+# Next.js <Badge type="warning" text="Third-Party" />
 
 The Next.js integration provides a simple way to add health checks to your Next.js application using the Pages Router API routes.
-
-## Installation
-
-First, install Medicus and Next.js types if you haven't already:
-
-```bash
-npm install medicus
-npm install --save-dev next
-```
 
 ## Basic Usage
 
