@@ -161,7 +161,7 @@ const medicus = new Medicus({
   checkers: {
     database: async () => {
       // Expensive check
-      await checkDatabaseConnection();
+      await checkDatabase();
       return HealthStatus.HEALTHY;
     }
   }
@@ -214,7 +214,6 @@ export async function GET() {
 The integration is fully typed and works seamlessly with TypeScript:
 
 ```ts
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { Medicus, HealthStatus } from 'medicus';
 import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
 

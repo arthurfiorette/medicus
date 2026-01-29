@@ -23,12 +23,12 @@ export interface NextApiHealthCheckOptions {
  * @example
  * ```ts
  * // pages/api/health.ts
- * import { Medicus } from 'medicus';
+ * import { Medicus, HealthStatus } from 'medicus';
  * import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
  *
  * const medicus = new Medicus({
  *   checkers: {
- *     database: () => ({ status: 'healthy' })
+ *     database: () => HealthStatus.HEALTHY
  *   }
  * });
  *
