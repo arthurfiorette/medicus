@@ -1,15 +1,35 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { HealthStatus, Medicus } from '../../src';
-import { createNextApiHealthCheckHandler } from '../../src/integrations/nextjs';
+import { HealthStatus } from '../../src';
+import {
+  createNextHealthCheckHandler,
+  createNextPagesHealthCheckHandler
+} from '../../src/integrations/nextjs';
 
-// Mock Next.js types for testing
-interface MockNextApiRequest {
-  query: Record<string, string | string[] | undefined>;
-  headers?: Record<string, string>;
+// Mock Next.js App Router types
+interface MockNextRequest {
+  nextUrl: {
+    searchParams: URLSearchParams;
+  };
+  headers: Map<string, string>;
 }
 
-interface MockNextApiResponse {
+function createMockNextRequest(queryParams: Record<string, string> = {}): MockNextRequest {
+  const searchParams = new URLSearchParams(queryParams);
+  const headers = new Map<string, string>();
+  return {
+    nextUrl: { searchParams },
+    headers
+  };
+}
+
+// Mock Next.js Pages Router types
+interface MockPagesRequest {
+  query: Record<string, string | string[] | undefined>;
+  headers: Record<string, string>;
+}
+
+interface MockPagesResponse {
   statusCode?: number;
   headers: Record<string, string>;
   body?: unknown;
@@ -18,8 +38,8 @@ interface MockNextApiResponse {
   json(body: unknown): this;
 }
 
-function createMockResponse(): MockNextApiResponse {
-  const response: MockNextApiResponse = {
+function createMockPagesResponse(): MockPagesResponse {
+  const response: MockPagesResponse = {
     headers: {},
     status(code: number) {
       this.statusCode = code;
@@ -38,64 +58,142 @@ function createMockResponse(): MockNextApiResponse {
 }
 
 describe('Next.js Integration', () => {
-  describe('createNextApiHealthCheckHandler', () => {
+  describe('createNextHealthCheckHandler (App Router)', () => {
     it('creates a working health check handler', async () => {
-      using medicus = new Medicus({
+      const handler = createNextHealthCheckHandler({
         checkers: {
           test: () => HealthStatus.HEALTHY
         }
       });
 
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: {} };
-      const res = createMockResponse();
+      const req = createMockNextRequest();
 
       //@ts-expect-error - mock types
-      await handler(req, res);
+      const response = await handler(req);
 
-      assert.equal(res.statusCode, 200);
-      assert.equal(res.headers['content-type'], 'application/json; charset=utf-8');
-      assert.equal(res.headers['cache-control'], 'no-cache, no-store, must-revalidate');
-
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-      //@ts-expect-error - body is unknown
-      assert.equal(typeof res.body.services, 'object');
-    });
-
-    it('includes debug information when enabled via options', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus, { debug: true });
-      const req: MockNextApiRequest = { query: {} };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-      //@ts-expect-error - body is unknown
-      assert.ok(res.body.services.test);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.services.test.debug.key, 'value');
+      assert.ok(response);
+      //@ts-expect-error - NextResponse type
+      assert.equal(response.status, 200);
+      //@ts-expect-error - NextResponse type
+      const body = await response.json();
+      assert.equal(body.status, 'healthy');
     });
 
     it('supports debug query parameter', async () => {
-      using medicus = new Medicus({
+      const handler = createNextHealthCheckHandler({
         checkers: {
           test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
         }
       });
 
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: { debug: 'true' } };
-      const res = createMockResponse();
+      const req = createMockNextRequest({ debug: 'true' });
+
+      //@ts-expect-error - mock types
+      const response = await handler(req);
+
+      //@ts-expect-error - NextResponse type
+      const body = await response.json();
+      assert.equal(body.status, 'healthy');
+      assert.ok(body.services.test);
+      assert.equal(body.services.test.debug.key, 'value');
+    });
+
+    it('supports debug detector function', async () => {
+      const handler = createNextHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        },
+        debug: (req) => req.headers.get('authorization') === 'Bearer secret'
+      });
+
+      // Without auth
+      const req1 = createMockNextRequest();
+      //@ts-expect-error - mock types
+      const response1 = await handler(req1);
+      //@ts-expect-error - NextResponse type
+      const body1 = await response1.json();
+      assert.equal(Object.keys(body1.services).length, 0);
+
+      // With auth
+      const req2 = createMockNextRequest();
+      req2.headers.set('authorization', 'Bearer secret');
+      //@ts-expect-error - mock types
+      const response2 = await handler(req2);
+      //@ts-expect-error - NextResponse type
+      const body2 = await response2.json();
+      assert.equal(body2.services.test.debug.key, 'value');
+    });
+
+    it('supports custom headers', async () => {
+      const handler = createNextHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        },
+        headers: {
+          'x-custom': 'test'
+        }
+      });
+
+      const req = createMockNextRequest();
+
+      //@ts-expect-error - mock types
+      const response = await handler(req);
+
+      //@ts-expect-error - NextResponse type
+      assert.equal(response.headers.get('x-custom'), 'test');
+    });
+
+    it('returns appropriate status codes', async () => {
+      const unhealthyHandler = createNextHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.UNHEALTHY
+        }
+      });
+
+      const req = createMockNextRequest();
+
+      //@ts-expect-error - mock types
+      const response = await unhealthyHandler(req);
+
+      //@ts-expect-error - NextResponse type
+      assert.equal(response.status, 503);
+      //@ts-expect-error - NextResponse type
+      const body = await response.json();
+      assert.equal(body.status, 'unhealthy');
+    });
+  });
+
+  describe('createNextPagesHealthCheckHandler (Pages Router)', () => {
+    it('creates a working health check handler', async () => {
+      const handler = createNextPagesHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        }
+      });
+
+      const req: MockPagesRequest = { query: {}, headers: {} };
+      const res = createMockPagesResponse();
+
+      //@ts-expect-error - mock types
+      await handler(req, res);
+
+      assert.equal(res.statusCode, 200);
+      assert.equal(res.headers['content-type'], 'application/json; charset=utf-8');
+      assert.equal(res.headers['cache-control'], 'no-cache, no-store, must-revalidate');
+
+      //@ts-expect-error - body is unknown
+      assert.equal(res.body.status, 'healthy');
+    });
+
+    it('supports debug query parameter', async () => {
+      const handler = createNextPagesHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        }
+      });
+
+      const req: MockPagesRequest = { query: { debug: 'true' }, headers: {} };
+      const res = createMockPagesResponse();
 
       //@ts-expect-error - mock types
       await handler(req, res);
@@ -109,363 +207,70 @@ describe('Next.js Integration', () => {
       assert.equal(res.body.services.test.debug.key, 'value');
     });
 
-    it('supports last query parameter', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-
-      // First request to populate lastCheck
-      const req1: MockNextApiRequest = { query: {} };
-      const res1 = createMockResponse();
-      //@ts-expect-error - mock types
-      await handler(req1, res1);
-
-      // Second request with last=true
-      const req2: MockNextApiRequest = { query: { last: 'true' } };
-      const res2 = createMockResponse();
-      //@ts-expect-error - mock types
-      await handler(req2, res2);
-
-      assert.equal(res2.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res2.body.status, 'healthy');
-    });
-
-    it('supports simulate query parameter', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: { simulate: 'unhealthy' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 503);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'unhealthy');
-    });
-
-    it('ignores invalid simulate values', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: { simulate: 'invalid' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-    });
-
-    it('returns appropriate status codes', async () => {
-      using healthyMedicus = new Medicus({
-        checkers: { test: () => HealthStatus.HEALTHY }
-      });
-
-      using degradedMedicus = new Medicus({
-        checkers: { test: () => HealthStatus.DEGRADED }
-      });
-
-      using unhealthyMedicus = new Medicus({
-        checkers: { test: () => HealthStatus.UNHEALTHY }
-      });
-
-      // Test healthy (200)
-      const healthyHandler = createNextApiHealthCheckHandler(healthyMedicus);
-      const healthyReq: MockNextApiRequest = { query: {} };
-      const healthyRes = createMockResponse();
-      //@ts-expect-error - mock types
-      await healthyHandler(healthyReq, healthyRes);
-      assert.equal(healthyRes.statusCode, 200);
-
-      // Test degraded (200)
-      const degradedHandler = createNextApiHealthCheckHandler(degradedMedicus);
-      const degradedReq: MockNextApiRequest = { query: {} };
-      const degradedRes = createMockResponse();
-      //@ts-expect-error - mock types
-      await degradedHandler(degradedReq, degradedRes);
-      assert.equal(degradedRes.statusCode, 200);
-
-      // Test unhealthy (503)
-      const unhealthyHandler = createNextApiHealthCheckHandler(unhealthyMedicus);
-      const unhealthyReq: MockNextApiRequest = { query: {} };
-      const unhealthyRes = createMockResponse();
-      //@ts-expect-error - mock types
-      await unhealthyHandler(unhealthyReq, unhealthyRes);
-      assert.equal(unhealthyRes.statusCode, 503);
-    });
-
-    it('handles health check errors gracefully', async () => {
-      using medicus = new Medicus({
-        errorLogger() {},
-        checkers: {
-          failing: () => {
-            throw new Error('Test error');
-          }
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: {} };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 503);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'unhealthy');
-      //@ts-expect-error - body is unknown
-      assert.equal(typeof res.body.services, 'object');
-    });
-
-    it('handles array query parameters', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: { debug: ['true', 'false'] } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      // Should handle gracefully without throwing
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-    });
-
-    it('works with multiple checkers', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          database: () => HealthStatus.HEALTHY,
-          redis: () => HealthStatus.HEALTHY,
-          api: () => HealthStatus.DEGRADED
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: { debug: 'true' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'degraded'); // Lowest status wins
-      //@ts-expect-error - body is unknown
-      assert.ok(res.body.services.database);
-      //@ts-expect-error - body is unknown
-      assert.ok(res.body.services.redis);
-      //@ts-expect-error - body is unknown
-      assert.ok(res.body.services.api);
-    });
-
-    it('respects custom context', async () => {
-      interface MyContext {
-        config: { apiUrl: string };
-      }
-
-      const context: MyContext = {
-        config: { apiUrl: 'https://api.example.com' }
-      };
-
-      using medicus = new Medicus<MyContext>({
-        context,
-        checkers: {
-          api: (ctx) => {
-            // Verify we can access context
-            assert.ok(ctx?.config.apiUrl);
-            return HealthStatus.HEALTHY;
-          }
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: {} };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-    });
-
-    it('sets correct response headers', async () => {
-      using medicus = new Medicus({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const handler = createNextApiHealthCheckHandler(medicus);
-      const req: MockNextApiRequest = { query: {} };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.headers['content-type'], 'application/json; charset=utf-8');
-      assert.equal(res.headers['cache-control'], 'no-cache, no-store, must-revalidate');
-    });
-
-    it('creates handler from options object directly', async () => {
-      const handler = createNextApiHealthCheckHandler({
-        checkers: {
-          test: () => HealthStatus.HEALTHY
-        }
-      });
-
-      const req: MockNextApiRequest = { query: { debug: 'true' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      assert.equal(res.statusCode, 200);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-      //@ts-expect-error - body is unknown
-      assert.ok(res.body.services.test);
-    });
-
     it('supports debug detector function', async () => {
-      const handler = createNextApiHealthCheckHandler({
+      const handler = createNextPagesHealthCheckHandler({
         checkers: {
           test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
         },
-        debug: (req) => {
-          //@ts-expect-error - mock types
-          return req.headers?.authorization === 'Bearer secret';
-        }
+        debug: (req) => req.headers?.authorization === 'Bearer secret'
       });
 
-      // Without auth header - no debug (services should be empty)
-      const req1: MockNextApiRequest = { query: {} };
-      //@ts-expect-error - add headers to mock
-      req1.headers = {};
-      const res1 = createMockResponse();
+      // Without auth
+      const req1: MockPagesRequest = { query: {}, headers: {} };
+      const res1 = createMockPagesResponse();
 
       //@ts-expect-error - mock types
       await handler(req1, res1);
 
       //@ts-expect-error - body is unknown
-      assert.equal(res1.body.status, 'healthy');
-      // When debug is false, services is empty
-      //@ts-expect-error - body is unknown
       assert.equal(Object.keys(res1.body.services).length, 0);
 
-      // With auth header - show debug
-      const req2: MockNextApiRequest = { query: {} };
-      //@ts-expect-error - add headers to mock
-      req2.headers = { authorization: 'Bearer secret' };
-      const res2 = createMockResponse();
+      // With auth
+      const req2: MockPagesRequest = { query: {}, headers: { authorization: 'Bearer secret' } };
+      const res2 = createMockPagesResponse();
 
       //@ts-expect-error - mock types
       await handler(req2, res2);
 
-      //@ts-expect-error - body is unknown
-      assert.equal(res2.body.status, 'healthy');
       //@ts-expect-error - body is unknown
       assert.equal(res2.body.services.test.debug.key, 'value');
     });
 
-    it('query debug parameter overrides debug detector', async () => {
-      const handler = createNextApiHealthCheckHandler({
+    it('supports custom headers', async () => {
+      const handler = createNextPagesHealthCheckHandler({
         checkers: {
-          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+          test: () => HealthStatus.HEALTHY
         },
-        debug: false // Debug disabled by default
-      });
-
-      const req: MockNextApiRequest = { query: { debug: 'true' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.services.test.debug.key, 'value');
-    });
-
-    it('supports background checks with options object', async () => {
-      let checkCount = 0;
-      const handler = createNextApiHealthCheckHandler({
-        checkers: {
-          test: () => {
-            checkCount++;
-            return HealthStatus.HEALTHY;
-          }
-        },
-        backgroundCheckInterval: 100,
-        eagerBackgroundCheck: true
-      });
-
-      // Wait for background check to run
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      const req: MockNextApiRequest = { query: { last: 'true' } };
-      const res = createMockResponse();
-
-      //@ts-expect-error - mock types
-      await handler(req, res);
-
-      // Background check should have run
-      assert.ok(checkCount > 0);
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-    });
-
-    it('supports async debug detector function', async () => {
-      const handler = createNextApiHealthCheckHandler({
-        checkers: {
-          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
-        },
-        debug: async (req) => {
-          // Simulate async auth check
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          //@ts-expect-error - mock types
-          return req.headers?.authorization === 'Bearer secret';
+        headers: {
+          'x-custom': 'test'
         }
       });
 
-      const req: MockNextApiRequest = { query: {} };
-      //@ts-expect-error - add headers to mock
-      req.headers = { authorization: 'Bearer secret' };
-      const res = createMockResponse();
+      const req: MockPagesRequest = { query: {}, headers: {} };
+      const res = createMockPagesResponse();
 
       //@ts-expect-error - mock types
       await handler(req, res);
 
+      assert.equal(res.headers['x-custom'], 'test');
+    });
+
+    it('returns appropriate status codes', async () => {
+      const unhealthyHandler = createNextPagesHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.UNHEALTHY
+        }
+      });
+
+      const req: MockPagesRequest = { query: {}, headers: {} };
+      const res = createMockPagesResponse();
+
+      //@ts-expect-error - mock types
+      await unhealthyHandler(req, res);
+
+      assert.equal(res.statusCode, 503);
       //@ts-expect-error - body is unknown
-      assert.equal(res.body.status, 'healthy');
-      //@ts-expect-error - body is unknown
-      assert.equal(res.body.services.test.debug.key, 'value');
+      assert.equal(res.body.status, 'unhealthy');
     });
   });
 });

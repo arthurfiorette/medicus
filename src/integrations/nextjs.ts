@@ -1,12 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { Medicus } from '../medicus';
 import type { MedicusOption } from '../types';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import { DefaultHttpHeaders, parseHealthStatus, performHttpCheck } from '../utils/http';
 
-/** A detector function that can be used to determine if the debug output should be shown */
-export type DebugDetector = boolean | ((req: NextApiRequest) => boolean | Promise<boolean>);
+/** A detector function that can be used to determine if the debug output should be shown for Pages Router */
+export type PagesDebugDetector = boolean | ((req: NextApiRequest) => boolean | Promise<boolean>);
 
-export interface NextApiHealthCheckOptions {
+/** A detector function that can be used to determine if the debug output should be shown for App Router */
+export type AppDebugDetector = boolean | ((req: NextRequest) => boolean | Promise<boolean>);
+
+export interface NextHealthCheckOptions {
   /**
    * Whether to include debug information in the response by default.
    * Can be a boolean or a function that receives the request and returns a boolean.
@@ -20,69 +25,44 @@ export interface NextApiHealthCheckOptions {
    * { debug: true }
    *
    * // Conditionally show debug based on auth
-   * { debug: (req) => req.headers.authorization === 'Bearer secret' }
+   * { debug: (req) => req.headers.get('authorization') === 'Bearer secret' }
    * ```
    */
-  debug?: DebugDetector;
+  debug?: AppDebugDetector | PagesDebugDetector;
+
+  /**
+   * Custom response headers to include in health check responses
+   *
+   * @default { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache, no-store, must-revalidate' }
+   */
+  headers?: Record<string, string>;
 }
 
 /**
- * Options for creating a Next.js health check handler when not passing a Medicus instance.
- * Combines MedicusOption with NextApiHealthCheckOptions.
+ * Options for creating a Next.js health check handler.
+ * Combines MedicusOption with NextHealthCheckOptions.
  */
-export type NextApiMedicusOptions<Ctx = void> = MedicusOption<Ctx> & NextApiHealthCheckOptions;
+export type NextMedicusOptions<Ctx = void> = MedicusOption<Ctx> & NextHealthCheckOptions;
 
 /**
- * Next.js API route handler function type for health checks.
+ * Creates a Next.js App Router route handler for health checks.
  *
- * Compatible with Next.js Pages Router API routes.
- *
- * @param req - Next.js API request object
- * @param res - Next.js API response object
- * @returns Promise that resolves when the response has been sent
- *
- * @example
- * ```ts
- * // pages/api/health.ts
- * import { Medicus, HealthStatus } from 'medicus';
- * import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
- *
- * const medicus = new Medicus({
- *   checkers: {
- *     database: () => HealthStatus.HEALTHY
- *   }
- * });
- *
- * export default createNextApiHealthCheckHandler(medicus);
- * ```
- */
-export type NextApiHealthCheckHandler = (
-  this: void,
-  req: NextApiRequest,
-  res: NextApiResponse
-) => Promise<void>;
-
-/**
- * Creates a Next.js API route handler for health checks.
- *
- * This handler is designed for use with Next.js Pages Router and supports
- * the same query parameters as other Medicus integrations:
+ * This handler is designed for use with Next.js App Router (the default and recommended approach).
+ * Supports query parameters:
  * - `?debug=true` - Include debug information in response
  * - `?last=true` - Return the last cached health check result
  * - `?simulate=healthy|degraded|unhealthy` - Simulate a specific health status
  *
- * @param medicusOrOptions - Either a Medicus instance or MedicusOption to create one
- * @param options - Optional configuration (only used when first param is a Medicus instance)
- * @returns A Next.js API route handler function
+ * @param options - Configuration options including checkers and debug settings
+ * @returns A Next.js App Router GET handler function
  *
  * @example
  * ```ts
- * // pages/api/health.ts
- * import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+ * // app/api/health/route.ts
  * import { HealthStatus } from 'medicus';
+ * import { createNextHealthCheckHandler } from 'medicus/nextjs';
  *
- * // Pass options directly - Medicus instance created automatically
- * export default createNextApiHealthCheckHandler({
+ * export const GET = createNextHealthCheckHandler({
  *   checkers: {
  *     database: () => HealthStatus.HEALTHY,
  *     redis: async () => {
@@ -96,85 +76,101 @@ export type NextApiHealthCheckHandler = (
  * @example
  * ```ts
  * // With conditional debug based on authentication
- * export default createNextApiHealthCheckHandler({
+ * export const GET = createNextHealthCheckHandler({
  *   checkers: {
  *     database: () => HealthStatus.HEALTHY
  *   },
- *   debug: (req) => req.headers.authorization === 'Bearer secret-token'
+ *   debug: (req) => req.headers.get('authorization') === 'Bearer secret-token'
  * });
  * ```
+ */
+export function createNextHealthCheckHandler<Ctx = void>(
+  options: NextMedicusOptions<Ctx>
+): (req: NextRequest) => Promise<NextResponse> {
+  const { debug, headers, ...medicusOptions } = options;
+  const medicus = new Medicus(medicusOptions);
+  const debugDetector = debug ?? false;
+  const defaultHeaders = {
+    ...DefaultHttpHeaders,
+    ...headers
+  };
+
+  return async function nextHealthCheckHandler(req: NextRequest) {
+    // Parse query parameters
+    const searchParams = req.nextUrl.searchParams;
+    const last = !!searchParams.get('last');
+    const queryDebug = !!searchParams.get('debug');
+
+    // Determine debug mode: query param takes precedence, then debugDetector
+    let isDebug = queryDebug;
+    if (!isDebug && typeof debugDetector === 'function') {
+      isDebug = await (debugDetector as (req: NextRequest) => boolean | Promise<boolean>)(req);
+    } else if (!isDebug) {
+      isDebug = debugDetector as boolean;
+    }
+
+    const simulate = parseHealthStatus(searchParams.get('simulate'));
+
+    // Perform health check
+    const check = await performHttpCheck(medicus, isDebug, last, simulate);
+
+    // Return response
+    return NextResponse.json(check.result, {
+      status: check.status,
+      headers: defaultHeaders
+    });
+  };
+}
+
+/**
+ * Creates a Next.js Pages Router API route handler for health checks.
+ *
+ * This handler is for the legacy Pages Router. For new projects, use `createNextHealthCheckHandler` with App Router instead.
+ * Supports query parameters:
+ * - `?debug=true` - Include debug information in response
+ * - `?last=true` - Return the last cached health check result
+ * - `?simulate=healthy|degraded|unhealthy` - Simulate a specific health status
+ *
+ * @param options - Configuration options including checkers and debug settings
+ * @returns A Next.js Pages Router API route handler function
  *
  * @example
  * ```ts
- * // Pass a pre-created Medicus instance
- * import { Medicus, HealthStatus } from 'medicus';
- * import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+ * // pages/api/health.ts
+ * import { HealthStatus } from 'medicus';
+ * import { createNextPagesHealthCheckHandler } from 'medicus/nextjs';
  *
- * const medicus = new Medicus({
+ * export default createNextPagesHealthCheckHandler({
  *   checkers: {
  *     database: () => HealthStatus.HEALTHY
  *   }
  * });
- *
- * export default createNextApiHealthCheckHandler(medicus);
- * ```
- *
- * @example
- * ```ts
- * // With debug enabled by default
- * export default createNextApiHealthCheckHandler(medicus, {
- *   debug: true
- * });
- * ```
- *
- * @example
- * ```ts
- * // Usage with background checks
- * export default createNextApiHealthCheckHandler({
- *   checkers: {
- *     database: () => HealthStatus.HEALTHY
- *   },
- *   backgroundCheckInterval: 30000 // Run checks every 30 seconds
- * });
  * ```
  */
-export function createNextApiHealthCheckHandler<Ctx = void>(
-  options: NextApiMedicusOptions<Ctx>
-): NextApiHealthCheckHandler;
-export function createNextApiHealthCheckHandler<Ctx = void>(
-  medicus: Medicus<Ctx>,
-  options?: NextApiHealthCheckOptions
-): NextApiHealthCheckHandler;
-export function createNextApiHealthCheckHandler<Ctx = void>(
-  medicusOrOptions: Medicus<Ctx> | NextApiMedicusOptions<Ctx>,
-  options?: NextApiHealthCheckOptions
-): NextApiHealthCheckHandler {
-  // Determine if first argument is a Medicus instance or options
-  const isMedicusInstance = medicusOrOptions instanceof Medicus;
+export function createNextPagesHealthCheckHandler<Ctx = void>(
+  options: NextMedicusOptions<Ctx>
+): (req: NextApiRequest, res: NextApiResponse) => Promise<void> {
+  const { debug, headers, ...medicusOptions } = options;
+  const medicus = new Medicus(medicusOptions);
+  const debugDetector = debug ?? false;
+  const defaultHeaders = {
+    ...DefaultHttpHeaders,
+    ...headers
+  };
 
-  let medicus: Medicus<Ctx>;
-  let debugDetector: DebugDetector;
-
-  if (isMedicusInstance) {
-    // First param is a Medicus instance
-    medicus = medicusOrOptions;
-    debugDetector = options?.debug ?? false;
-  } else {
-    // First param is options, extract debug and create Medicus
-    const { debug, ...medicusOptions } = medicusOrOptions;
-    medicus = new Medicus(medicusOptions);
-    debugDetector = debug ?? false;
-  }
-
-  return async function nextApiHealthCheckHandler(req, res) {
+  return async function nextPagesHealthCheckHandler(req, res) {
     // Parse query parameters
     const query = req.query;
     const last = !!query.last;
     const queryDebug = !!query.debug;
 
     // Determine debug mode: query param takes precedence, then debugDetector
-    const isDebug =
-      queryDebug || (typeof debugDetector === 'boolean' ? debugDetector : await debugDetector(req));
+    let isDebug = queryDebug;
+    if (!isDebug && typeof debugDetector === 'function') {
+      isDebug = await (debugDetector as (req: NextApiRequest) => boolean | Promise<boolean>)(req);
+    } else if (!isDebug) {
+      isDebug = debugDetector as boolean;
+    }
 
     const simulate = parseHealthStatus(
       typeof query.simulate === 'string' ? query.simulate : undefined
@@ -184,8 +180,9 @@ export function createNextApiHealthCheckHandler<Ctx = void>(
     const check = await performHttpCheck(medicus, isDebug, last, simulate);
 
     // Set headers
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    for (const [key, value] of Object.entries(defaultHeaders)) {
+      res.setHeader(key, value);
+    }
 
     // Send response
     res.status(check.status).json(check.result);
