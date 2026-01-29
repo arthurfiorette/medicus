@@ -66,3 +66,11 @@ export function parseHealthStatus(value?: string | null): HealthStatus | undefin
       return undefined;
   }
 }
+
+/**
+ * Default HTTP headers for health check responses
+ */
+export const DefaultHttpHeaders = {
+  'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-cache, no-store, must-revalidate'
+};

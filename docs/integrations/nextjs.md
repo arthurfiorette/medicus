@@ -43,64 +43,6 @@ const medicus = new Medicus({
 export default createNextApiHealthCheckHandler(medicus);
 ```
 
-This will create a health check endpoint at `/api/health` that returns:
-
-```json
-{
-  "status": "healthy",
-  "services": {
-    "database": {
-      "status": "healthy"
-    }
-  }
-}
-```
-
-## Query Parameters
-
-The handler supports the following query parameters:
-
-- `?debug=true` - Include debug information in the response
-- `?last=true` - Return the last cached health check result (useful with background checks)
-- `?simulate=healthy|degraded|unhealthy` - Simulate a specific health status (useful for testing)
-
-### Example with Debug Information
-
-```ts
-// pages/api/health.ts
-import { HealthStatus } from 'medicus';
-import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
-
-export default createNextApiHealthCheckHandler({
-  checkers: {
-    database: () => ({
-      status: HealthStatus.HEALTHY,
-      debug: {
-        connections: 10,
-        maxConnections: 100
-      }
-    })
-  }
-});
-```
-
-Calling `/api/health?debug=true` will return:
-
-```json
-{
-  "status": "healthy",
-  "services": {
-    "database": {
-      "status": "healthy",
-      "debug": {
-        "connections": 10,
-        "maxConnections": 100
-      }
-    }
-  }
-}
-```
-
 ## Configuration Options
 
 The `debug` option controls whether to show debug information in the response. It can be:
@@ -109,14 +51,21 @@ The `debug` option controls whether to show debug information in the response. I
 - **`function`** - A function `(req: NextApiRequest) => boolean | Promise<boolean>` that receives the request and returns whether to show debug info
 
 ```ts
+import type { NextApiRequest } from 'next';
+
 interface NextApiHealthCheckOptions {
-  debug?: boolean | ((req: NextApiRequest) => boolean | Promise<boolean>);
+  debug?:
+    | boolean
+    | ((req: NextApiRequest) => boolean | Promise<boolean>);
 }
 ```
 
 ### Enable Debug by Default
 
 ```ts
+import { HealthStatus } from 'medicus';
+import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+
 export default createNextApiHealthCheckHandler({
   checkers: {
     database: () => HealthStatus.HEALTHY
@@ -156,6 +105,9 @@ This is useful for protecting sensitive debug information in production while st
 You can also use async functions:
 
 ```ts
+import { HealthStatus } from 'medicus';
+import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
+
 export default createNextApiHealthCheckHandler({
   checkers: {
     database: () => HealthStatus.HEALTHY
@@ -166,88 +118,6 @@ export default createNextApiHealthCheckHandler({
     return user?.role === 'admin';
   }
 });
-```
-
-## Real-World Example
-
-Here's a complete example with multiple health checkers:
-
-```ts
-// pages/api/health.ts
-import { HealthStatus } from 'medicus';
-import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
-import { checkDatabase } from '@/lib/db';
-import { checkRedis } from '@/lib/redis';
-
-export default createNextApiHealthCheckHandler({
-  checkers: {
-    async database() {
-      try {
-        await checkDatabase();
-        return HealthStatus.HEALTHY;
-      } catch (error) {
-        return HealthStatus.UNHEALTHY;
-      }
-    },
-    async redis() {
-      try {
-        const isHealthy = await checkRedis();
-        return isHealthy ? HealthStatus.HEALTHY : HealthStatus.DEGRADED;
-      } catch (error) {
-        return HealthStatus.UNHEALTHY;
-      }
-    },
-    async api() {
-      try {
-        const response = await fetch('https://api.example.com/health');
-        return response.ok ? HealthStatus.HEALTHY : HealthStatus.DEGRADED;
-      } catch (error) {
-        return HealthStatus.UNHEALTHY;
-      }
-    }
-  }
-});
-```
-
-## Background Checks
-
-You can configure background health checks directly in the options:
-
-```ts
-// pages/api/health.ts
-import { HealthStatus } from 'medicus';
-import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
-
-export default createNextApiHealthCheckHandler({
-  checkers: {
-    database: async () => {
-      // Expensive check
-      await checkDatabase();
-      return HealthStatus.HEALTHY;
-    }
-  },
-  // Run checks every 30 seconds in the background
-  backgroundCheckInterval: 30000,
-  // Run first check immediately on startup
-  eagerBackgroundCheck: true
-});
-```
-
-Now you can call `/api/health?last=true` to get instant responses from the cache.
-
-Alternatively, if you're using a pre-created Medicus instance:
-
-```ts
-const medicus = new Medicus({
-  checkers: {
-    database: () => HealthStatus.HEALTHY
-  }
-});
-
-// Start background checks manually
-medicus.startBackgroundCheck(30000);
-
-export default createNextApiHealthCheckHandler(medicus);
 ```
 
 ## Status Codes
@@ -281,37 +151,4 @@ export async function GET() {
   const status = result.status === 'unhealthy' ? 503 : 200;
   return NextResponse.json(result, { status });
 }
-```
-
-## TypeScript Support
-
-The integration is fully typed and works seamlessly with TypeScript:
-
-```ts
-import { Medicus, HealthStatus } from 'medicus';
-import { createNextApiHealthCheckHandler } from 'medicus/nextjs';
-
-// Type-safe context
-interface AppContext {
-  config: {
-    dbUrl: string;
-  };
-}
-
-const medicus = new Medicus<AppContext>({
-  context: {
-    config: {
-      dbUrl: process.env.DATABASE_URL!
-    }
-  },
-  checkers: {
-    database: (ctx) => {
-      // ctx is fully typed as AppContext
-      console.log(ctx.config.dbUrl);
-      return HealthStatus.HEALTHY;
-    }
-  }
-});
-
-export default createNextApiHealthCheckHandler(medicus);
 ```
