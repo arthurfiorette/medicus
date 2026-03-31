@@ -24,4 +24,11 @@ Once registered, the health check route will be available at `http://localhost:3
 
 Additionally, the `app.medicus` object is exposed, allowing you to interact directly with the Medicus instance for custom health check logic.
 
+## Status Codes
+
+The handler returns appropriate HTTP status codes:
+
+- `200 OK` - Service is healthy or degraded
+- `503 Service Unavailable` - Service is unhealthy
+
 For more details about Fastify, visit the [Fastify documentation](https://www.fastify.io/).
