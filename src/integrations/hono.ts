@@ -1,7 +1,7 @@
 import type { Context, Handler } from 'hono';
 import { Medicus } from '../medicus';
 import type { HealthCheckResult, MedicusOption } from '../types';
-import { healthStatusToHttpStatus, parseHealthStatus, performHttpCheck } from '../utils/http';
+import { parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
   /**
@@ -19,7 +19,7 @@ export interface HonoHealthCheckOptions {
   headers?: Record<string, string>;
 }
 
-export type HonoMedicusOptions<Ctx = Context> = MedicusOption<Ctx> & HonoHealthCheckOptions;
+export type HonoMedicusOptions = Omit<MedicusOption<Context>, 'context'> & HonoHealthCheckOptions;
 export type HonoHealthCheckHandler = Handler & { [Symbol.dispose]: () => void };
 
 /**
@@ -49,11 +49,10 @@ export type HonoHealthCheckHandler = Handler & { [Symbol.dispose]: () => void };
  * );
  * ```
  */
-export function createHonoHealthCheckHandler<Ctx = Context>(
-  options: HonoMedicusOptions<Ctx> = {}
+export function createHonoHealthCheckHandler(
+  options: HonoMedicusOptions = {}
 ): HonoHealthCheckHandler {
-  const { context, debug, headers, ...medicusOptions } = options;
-  const hasExplicitContext = context !== undefined;
+  const { debug, headers, ...medicusOptions } = options;
   let defaultLastCheck: HealthCheckResult | undefined;
   const defaultDebug = !!debug;
   const defaultHeaders = {
@@ -65,25 +64,12 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
+    const activeMedicus = createRequestMedicus(c);
     let check: Awaited<ReturnType<typeof performHttpCheck>>;
-    const requestContext = (hasExplicitContext ? context : c) as Ctx;
-    const activeMedicus = createRequestMedicus(requestContext);
 
     try {
-      if (last && defaultLastCheck) {
-        const status = simulate || defaultLastCheck.status;
-
-        check = {
-          result: {
-            status,
-            services: debug ? defaultLastCheck.services : {}
-          },
-          status: healthStatusToHttpStatus(status)
-        };
-      } else {
-        check = await performHttpCheck(activeMedicus, debug, false, simulate);
-        defaultLastCheck = activeMedicus.lastCheck;
-      }
+      check = await performHttpCheck(activeMedicus, debug, last, simulate);
+      defaultLastCheck = activeMedicus.lastCheck;
     } finally {
       activeMedicus[Symbol.dispose]();
     }
@@ -99,7 +85,7 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
     [Symbol.dispose]() {}
   });
 
-  function createRequestMedicus(requestContext: Ctx): Medicus<Ctx> {
+  function createRequestMedicus(requestContext: Context): Medicus<Context> {
     const scopedMedicus = new Medicus({
       ...medicusOptions,
       context: requestContext

@@ -126,33 +126,4 @@ describe('Hono Integration', () => {
     assert.equal(response.status, 200);
     assert.equal(body.services.pathChecker.debug.path, '/health');
   });
-
-  it('respects explicit context override', async () => {
-    const app = new Hono();
-    app.get(
-      '/health',
-      createHonoHealthCheckHandler({
-        context: {
-          origin: 'explicit-context'
-        },
-        debug: true,
-        checkers: {
-          customContextChecker(context) {
-            return {
-              status: HealthStatus.HEALTHY,
-              debug: {
-                origin: context.origin
-              }
-            };
-          }
-        }
-      })
-    );
-
-    const response = await app.request('/health?debug=true');
-    const body = await response.json();
-
-    assert.equal(response.status, 200);
-    assert.equal(body.services.customContextChecker.debug.origin, 'explicit-context');
-  });
 });

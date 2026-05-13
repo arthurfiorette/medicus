@@ -34,7 +34,6 @@ By default, checkers receive the current Hono request context (`c`) as the Medic
 ```ts
 interface HonoHealthCheckOptions {
   checkers?: Record<string, HealthChecker>; // Medicus checkers
-  context?: unknown; // Optional explicit context override
   debug?: boolean; // Include debug info by default
   headers?: Record<string, string>; // Custom response headers
 }
