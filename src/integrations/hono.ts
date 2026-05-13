@@ -20,6 +20,7 @@ export interface HonoHealthCheckOptions {
 }
 
 export type HonoMedicusOptions<Ctx = Context> = MedicusOption<Ctx> & HonoHealthCheckOptions;
+export type HonoHealthCheckHandler = Handler & { [Symbol.dispose]: () => void };
 
 /**
  * Creates a complete Hono health check handler that parses query parameters
@@ -50,7 +51,7 @@ export type HonoMedicusOptions<Ctx = Context> = MedicusOption<Ctx> & HonoHealthC
  */
 export function createHonoHealthCheckHandler<Ctx = Context>(
   options: HonoMedicusOptions<Ctx> = {}
-): Handler {
+): HonoHealthCheckHandler {
   const { context, debug, headers, ...medicusOptions } = options;
   const hasExplicitContext = context !== undefined;
   const medicus = new Medicus(medicusOptions);
@@ -63,7 +64,7 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
     ...headers
   };
 
-  return async function honoHealthCheckHandler(c) {
+  const handler: Handler = async function honoHealthCheckHandler(c: Context) {
     if (!hasExplicitContext) {
       medicus.context = c as Ctx;
     }
@@ -80,4 +81,10 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
 
     return c.json(check.result, check.status as 200 | 503);
   };
+
+  return Object.assign(handler, {
+    [Symbol.dispose]() {
+      return medicus[Symbol.dispose]();
+    }
+  });
 }
