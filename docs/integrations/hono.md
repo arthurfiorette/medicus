@@ -48,6 +48,8 @@ Because of that lifecycle, background checks are not suitable and should remain 
 ## Options
 
 ```ts
+import { HealthChecker } from 'medicus';
+
 interface HonoHealthCheckOptions {
   checkers?: Record<string, HealthChecker>; // Medicus checkers
   debug?: boolean; // Include debug info by default
