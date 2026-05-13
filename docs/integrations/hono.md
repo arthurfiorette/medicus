@@ -23,6 +23,14 @@ app.get(
 
 By default, checkers receive the current Hono request context (`c`) as the Medicus context.
 
+You can use `MedicusVariables` to type-safe `c.set('medicus', ...)` / `c.get('medicus')`:
+
+```ts
+import type { MedicusVariables } from 'medicus/hono';
+
+type AppEnv = MedicusVariables;
+```
+
 ## Query Parameters
 
 - `?debug` - Include debug information

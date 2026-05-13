@@ -1,4 +1,4 @@
-import type { Context, Handler } from 'hono';
+import type { Context, Env, Handler, Input } from 'hono';
 import { Medicus } from '../medicus';
 import type { HealthCheckResult, MedicusOption } from '../types';
 import { parseHealthStatus, performHttpCheck } from '../utils/http';
@@ -19,8 +19,25 @@ export interface HonoHealthCheckOptions {
   headers?: Record<string, string>;
 }
 
-export type HonoMedicusOptions = Omit<MedicusOption<Context>, 'context'> & HonoHealthCheckOptions;
-export type HonoHealthCheckHandler = Handler & { [Symbol.dispose]: () => void };
+export type MedicusVariables<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input
+> = {
+  Variables: Medicus<Context<E, P, I>>;
+};
+
+export type HonoMedicusOptions<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input
+> = Omit<MedicusOption<Context<E, P, I>>, 'context'> & HonoHealthCheckOptions;
+
+export type HonoHealthCheckHandler<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input
+> = Handler<E, P, I> & { [Symbol.dispose]: () => void };
 
 /**
  * Creates a complete Hono health check handler that parses query parameters
@@ -49,9 +66,11 @@ export type HonoHealthCheckHandler = Handler & { [Symbol.dispose]: () => void };
  * );
  * ```
  */
-export function createHonoHealthCheckHandler(
-  options: HonoMedicusOptions = {}
-): HonoHealthCheckHandler {
+export function createHonoHealthCheckHandler<
+  E extends Env = Env,
+  P extends string = string,
+  I extends Input = Input
+>(options: HonoMedicusOptions<E, P, I> = {}): HonoHealthCheckHandler<E, P, I> {
   const { debug, headers, ...medicusOptions } = options;
   let defaultLastCheck: HealthCheckResult | undefined;
   const defaultDebug = !!debug;
@@ -60,7 +79,7 @@ export function createHonoHealthCheckHandler(
     ...headers
   };
 
-  const handler: Handler = async function honoHealthCheckHandler(c: Context) {
+  const handler: Handler<E, P, I> = async function honoHealthCheckHandler(c: Context<E, P, I>) {
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
@@ -85,7 +104,7 @@ export function createHonoHealthCheckHandler(
     [Symbol.dispose]() {}
   });
 
-  function createRequestMedicus(requestContext: Context): Medicus<Context> {
+  function createRequestMedicus(requestContext: Context<E, P, I>): Medicus<Context<E, P, I>> {
     const scopedMedicus = new Medicus({
       ...medicusOptions,
       context: requestContext
