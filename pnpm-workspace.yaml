@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+
+autoInstallPeers: true
+enablePrePostScripts: true
+packageManagerStrict: false
+shellEmulator: true

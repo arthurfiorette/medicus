@@ -176,6 +176,10 @@ export default defineConfig({
             link: 'fastify.md'
           },
           {
+            text: 'Hono',
+            link: 'hono.md'
+          },
+          {
             text: 'Avvio',
             link: 'avvio.md'
           },

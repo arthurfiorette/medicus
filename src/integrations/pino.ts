@@ -1,10 +1,10 @@
-import type { BaseLogger } from 'pino';
+import type { Logger } from 'pino';
 import { definePlugin } from '../plugins';
 
 /**
  * Plugin to add pino logger as the `errorLogger` for `Medicus`.
  */
-export const pinoMedicusPlugin = definePlugin<BaseLogger>((pino) => ({
+export const pinoMedicusPlugin = definePlugin<Logger>((pino) => ({
   configure(options) {
     options.errorLogger = function pinoErrorLogger(error: any, checkerName) {
       return pino.error(error, `Health check failed for ${checkerName}`);
