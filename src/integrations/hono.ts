@@ -48,7 +48,7 @@ export function createHonoHealthCheckHandler<Ctx = void>(
   medicus: Medicus<Ctx>,
   options: HonoHealthCheckOptions = {}
 ): Handler {
-  const defaultDebug = !!options.debug || false;
+  const defaultDebug = !!options.debug;
   const defaultHeaders = {
     'cache-control': 'no-cache, no-store, must-revalidate',
     ...options.headers
