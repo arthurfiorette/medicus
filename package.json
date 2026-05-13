@@ -45,7 +45,7 @@
     "@biomejs/biome": "^2.4.15",
     "@fastify/under-pressure": "^9.0.3",
     "@shikijs/vitepress-twoslash": "^4.0.2",
-    "@types/node": "^24.12.4",
+    "@types/node": "^25.7.0",
     "c8": "^11.0.0",
     "hono": "^4.12.18",
     "husky": "^9.1.7",
