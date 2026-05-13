@@ -1,7 +1,7 @@
 import type { Context, Env, Handler, Input } from 'hono';
 import { Medicus } from '../medicus';
 import type { HealthCheckResult, MedicusOption } from '../types';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import { healthStatusToHttpStatus, parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
   /**
@@ -24,7 +24,9 @@ export type MedicusVariables<
   P extends string = string,
   I extends Input = Input
 > = {
-  Variables: Medicus<Context<E, P, I>>;
+  Variables: {
+    medicus: Medicus<Context<E, P, I>>;
+  };
 };
 
 export type HonoMedicusOptions<
@@ -71,7 +73,12 @@ export function createHonoHealthCheckHandler<
   P extends string = string,
   I extends Input = Input
 >(options: HonoMedicusOptions<E, P, I> = {}): HonoHealthCheckHandler<E, P, I> {
-  const { debug, headers, ...medicusOptions } = options;
+  const {
+    context: _ignoredContext,
+    debug,
+    headers,
+    ...medicusOptions
+  } = options as HonoMedicusOptions<E, P, I> & { context?: unknown };
   let defaultLastCheck: HealthCheckResult | undefined;
   const defaultDebug = !!debug;
   const defaultHeaders = {
@@ -83,14 +90,27 @@ export function createHonoHealthCheckHandler<
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
-    const activeMedicus = createRequestMedicus(c);
     let check: Awaited<ReturnType<typeof performHttpCheck>>;
 
-    try {
-      check = await performHttpCheck(activeMedicus, debug, last, simulate);
-      defaultLastCheck = activeMedicus.lastCheck;
-    } finally {
-      activeMedicus[Symbol.dispose]();
+    if (last && defaultLastCheck) {
+      const status = simulate || defaultLastCheck.status;
+
+      check = {
+        result: {
+          status,
+          services: debug ? defaultLastCheck.services : {}
+        },
+        status: healthStatusToHttpStatus(status)
+      };
+    } else {
+      const activeMedicus = createRequestMedicus(c);
+
+      try {
+        check = await performHttpCheck(activeMedicus, debug, false, simulate);
+        defaultLastCheck = activeMedicus.lastCheck;
+      } finally {
+        activeMedicus[Symbol.dispose]();
+      }
     }
 
     for (const [key, value] of Object.entries(defaultHeaders)) {
@@ -105,15 +125,9 @@ export function createHonoHealthCheckHandler<
   });
 
   function createRequestMedicus(requestContext: Context<E, P, I>): Medicus<Context<E, P, I>> {
-    const scopedMedicus = new Medicus({
+    return new Medicus({
       ...medicusOptions,
       context: requestContext
     });
-
-    if (defaultLastCheck) {
-      scopedMedicus.lastCheck = defaultLastCheck;
-    }
-
-    return scopedMedicus;
   }
 }

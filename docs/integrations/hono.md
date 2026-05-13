@@ -29,6 +29,9 @@ You can use `MedicusVariables` to type-safe `c.set('medicus', ...)` / `c.get('me
 import type { MedicusVariables } from 'medicus/hono';
 
 type AppEnv = MedicusVariables;
+
+// c.set('medicus', medicusInstance)
+// const medicus = c.get('medicus')
 ```
 
 ## Query Parameters
