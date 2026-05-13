@@ -1,7 +1,7 @@
 import type { Context, Handler } from 'hono';
 import { Medicus } from '../medicus';
 import type { HealthCheckResult, MedicusOption } from '../types';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import { healthStatusToHttpStatus, parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
   /**
@@ -54,7 +54,6 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
 ): HonoHealthCheckHandler {
   const { context, debug, headers, ...medicusOptions } = options;
   const hasExplicitContext = context !== undefined;
-  const medicus = hasExplicitContext ? new Medicus({ ...medicusOptions, context }) : null;
   let defaultLastCheck: HealthCheckResult | undefined;
   const defaultDebug = !!debug;
   const defaultHeaders = {
@@ -67,18 +66,26 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
     let check: Awaited<ReturnType<typeof performHttpCheck>>;
+    const requestContext = (hasExplicitContext ? context : c) as Ctx;
+    const activeMedicus = createRequestMedicus(requestContext);
 
-    if (hasExplicitContext) {
-      check = await performHttpCheck(medicus!, debug, last, simulate);
-    } else {
-      const activeMedicus = createRequestMedicus(c as Ctx);
+    try {
+      if (last && defaultLastCheck) {
+        const status = simulate || defaultLastCheck.status;
 
-      try {
-        check = await performHttpCheck(activeMedicus, debug, last, simulate);
+        check = {
+          result: {
+            status,
+            services: debug ? defaultLastCheck.services : {}
+          },
+          status: healthStatusToHttpStatus(status)
+        };
+      } else {
+        check = await performHttpCheck(activeMedicus, debug, false, simulate);
         defaultLastCheck = activeMedicus.lastCheck;
-      } finally {
-        activeMedicus[Symbol.dispose]();
       }
+    } finally {
+      activeMedicus[Symbol.dispose]();
     }
 
     for (const [key, value] of Object.entries(defaultHeaders)) {
@@ -89,11 +96,7 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
   };
 
   return Object.assign(handler, {
-    [Symbol.dispose]() {
-      if (medicus) {
-        medicus[Symbol.dispose]();
-      }
-    }
+    [Symbol.dispose]() {}
   });
 
   function createRequestMedicus(requestContext: Ctx): Medicus<Ctx> {
