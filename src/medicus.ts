@@ -220,14 +220,18 @@ export class Medicus<Ctx = void> {
    * Performs a health check and returns the result.
    *
    * - `debug` defaults to `false`
+   * - `context` defaults to the instance context (`this.context`)
    *
    * **This function never throws**
    */
-  async performCheck(debug = false): Promise<HealthCheckResult> {
+  async performCheck(debug = false, context?: Ctx): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
+    const activeContext = context ?? this.context;
 
-    for await (const [serviceName, result] of Array.from(this.checkers, this.mapChecker, this)) {
+    for (const [serviceName, checker] of this.checkers) {
+      const result = await this.executeChecker(checker, activeContext);
+
       if (result.status === HealthStatus.UNHEALTHY) {
         status = HealthStatus.UNHEALTHY;
       } else if (result.status === HealthStatus.DEGRADED && status !== HealthStatus.UNHEALTHY) {
@@ -251,22 +255,20 @@ export class Medicus<Ctx = void> {
     return this.getLastCheck(debug)!;
   }
 
-  /** Simple helper function to yield the result of a health check */
-  protected async mapChecker([name, checker]: [string, HealthChecker<Ctx>]) {
-    return [name, await this.executeChecker(checker)] as const;
-  }
-
   /**
    * Runs a single health check and returns the result
    *
    * **This function never throws**
    */
-  protected async executeChecker(checker: HealthChecker<Ctx>): Promise<DetailedHealthCheck> {
+  protected async executeChecker(
+    checker: HealthChecker<Ctx>,
+    context = this.context
+  ): Promise<DetailedHealthCheck> {
     const signal = AbortSignal.timeout(this.checkerTimeoutMs);
 
     try {
       const check = await Promise.race([
-        checker(this.context, signal),
+        checker(context, signal),
         // Listens for the abort event to return the timeout result
         once(signal, 'abort').then(() => TimeoutUnhealthyCheck)
       ]);

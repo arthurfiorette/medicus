@@ -22,6 +22,7 @@ app.get(
 ```
 
 By default, checkers receive the current Hono request context (`c`) as the Medicus context.
+The underlying Medicus instance is created with `context: null` and each request passes `c` per check.
 
 You can use `MedicusVariables` to type-safe `c.set('medicus', ...)` / `c.get('medicus')`:
 
@@ -29,10 +30,14 @@ You can use `MedicusVariables` to type-safe `c.set('medicus', ...)` / `c.get('me
 import type { MedicusVariables } from 'medicus/hono';
 
 type AppEnv = MedicusVariables;
-
-// c.set('medicus', medicusInstance)
-// const medicus = c.get('medicus')
 ```
+
+The health handler does `c.set('medicus', medicus)` so other middleware/routes can read the same instance from request context.
+
+## Edge Runtime Note
+
+On edge runtimes (for example Cloudflare Workers), application instances are typically spun up per request.
+Because of that lifecycle, background checks are not suitable and should remain disabled (`backgroundCheckInterval` unset).
 
 ## Query Parameters
 

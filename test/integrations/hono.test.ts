@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { Hono } from 'hono';
-import { HealthStatus } from '../../src';
+import { HealthStatus, Medicus } from '../../src';
 import { createHonoHealthCheckHandler } from '../../src/integrations/hono';
 
 describe('Hono Integration', () => {
@@ -125,5 +125,27 @@ describe('Hono Integration', () => {
 
     assert.equal(response.status, 200);
     assert.equal(body.services.pathChecker.debug.path, '/health');
+  });
+
+  it('sets medicus instance into request context', async () => {
+    const app = new Hono();
+    let hasMedicusOnContext = false;
+
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        checkers: {
+          contextChecker(context) {
+            hasMedicusOnContext = context.get('medicus') instanceof Medicus;
+            return HealthStatus.HEALTHY;
+          }
+        }
+      })
+    );
+
+    const response = await app.request('/health');
+
+    assert.equal(response.status, 200);
+    assert.equal(hasMedicusOnContext, true);
   });
 });

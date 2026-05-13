@@ -31,7 +31,8 @@ export async function performHttpCheck<Ctx>(
   medicus: Medicus<Ctx>,
   isDebug: boolean,
   queryLast: boolean,
-  simulateStatus?: HealthStatus
+  simulateStatus?: HealthStatus,
+  context?: Ctx
 ): Promise<{ result: HealthCheckResult; status: number }> {
   let result: HealthCheckResult | null = null;
 
@@ -40,7 +41,11 @@ export async function performHttpCheck<Ctx>(
   }
 
   if (!result) {
-    result = await medicus.performCheck(isDebug);
+    if (context === undefined) {
+      result = await medicus.performCheck(isDebug);
+    } else {
+      result = await medicus.performCheck(isDebug, context);
+    }
   }
 
   if (simulateStatus) {

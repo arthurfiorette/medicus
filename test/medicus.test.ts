@@ -253,6 +253,28 @@ describe('Medicus', () => {
     assert.deepStrictEqual(medicus.getLastCheck(), secondCheck);
   });
 
+  it('supports overriding context per check', async () => {
+    using medicus = new Medicus<{ source: string }>({
+      context: { source: 'default' },
+      checkers: {
+        contextChecker(context) {
+          return {
+            status: HealthStatus.HEALTHY,
+            debug: {
+              source: context.source
+            }
+          };
+        }
+      }
+    });
+
+    const defaultResult = await medicus.performCheck(true);
+    assert.equal(defaultResult.services.contextChecker.debug?.source, 'default');
+
+    const overriddenResult = await medicus.performCheck(true, { source: 'request' });
+    assert.equal(overriddenResult.services.contextChecker.debug?.source, 'request');
+  });
+
   it('logs when an error happens', async () => {
     let loggedError: any = null;
 
