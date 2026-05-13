@@ -20,4 +20,9 @@ declare global {
    * Function that performs a slow check (e.g., database connectivity)
    */
   function performSlowCheck(): Promise<void>;
+
+  /**
+   * Sample function to validate a token
+   */
+  function validateToken(token: string | undefined): { id: string; role: string } | undefined;
 }

@@ -42,3 +42,10 @@ interface HttpHealthCheckOptions {
   headers?: Record<string, string>; // Custom headers (includes cache prevention by default)
 }
 ```
+
+## Status Codes
+
+The handler returns appropriate HTTP status codes:
+
+- `200 OK` - Service is healthy or degraded
+- `503 Service Unavailable` - Service is unhealthy

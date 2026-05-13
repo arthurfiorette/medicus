@@ -1,6 +1,6 @@
 import type { ServerResponse } from 'node:http';
 import type { Medicus } from '../medicus';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import { DefaultHttpHeaders, parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HttpHealthCheckOptions {
   /**
@@ -84,8 +84,7 @@ export function createHttpHealthCheckHandler<Ctx = void>(
 ): HttpHealthCheckHandler {
   const defaultDebug = !!options.debug || false;
   const defaultHeaders = {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-cache, no-store, must-revalidate',
+    ...DefaultHttpHeaders,
     ...options.headers
   };
 

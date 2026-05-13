@@ -172,6 +172,10 @@ export default defineConfig({
             link: 'http.md'
           },
           {
+            text: 'Next.js',
+            link: 'nextjs.md'
+          },
+          {
             text: 'Fastify',
             link: 'fastify.md'
           },
