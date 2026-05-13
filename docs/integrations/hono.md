@@ -6,19 +6,22 @@ You can integrate Medicus with your Hono application by attaching the `createHon
 
 ```ts
 import { Hono } from 'hono';
-import { Medicus, HealthStatus } from 'medicus';
+import { HealthStatus } from 'medicus';
 import { createHonoHealthCheckHandler } from 'medicus/hono';
 
 const app = new Hono();
 
-const medicus = new Medicus({
-  checkers: {
-    database: () => HealthStatus.HEALTHY
-  }
-});
-
-app.get('/health', createHonoHealthCheckHandler(medicus));
+app.get(
+  '/health',
+  createHonoHealthCheckHandler({
+    checkers: {
+      database: () => HealthStatus.HEALTHY
+    }
+  })
+);
 ```
+
+By default, checkers receive the current Hono request context (`c`) as the Medicus context.
 
 ## Query Parameters
 
@@ -30,6 +33,8 @@ app.get('/health', createHonoHealthCheckHandler(medicus));
 
 ```ts
 interface HonoHealthCheckOptions {
+  checkers?: Record<string, HealthChecker>; // Medicus checkers
+  context?: unknown; // Optional explicit context override
   debug?: boolean; // Include debug info by default
   headers?: Record<string, string>; // Custom response headers
 }

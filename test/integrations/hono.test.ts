@@ -1,19 +1,20 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
 import { Hono } from 'hono';
-import { HealthStatus, Medicus } from '../../src';
+import { HealthStatus } from '../../src';
 import { createHonoHealthCheckHandler } from '../../src/integrations/hono';
 
 describe('Hono Integration', () => {
   it('creates a working health check route', async () => {
-    using medicus = new Medicus({
-      checkers: {
-        test: () => HealthStatus.HEALTHY
-      }
-    });
-
     const app = new Hono();
-    app.get('/health', createHonoHealthCheckHandler(medicus));
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        }
+      })
+    );
 
     const response = await app.request('/health');
 
@@ -25,14 +26,15 @@ describe('Hono Integration', () => {
   });
 
   it('supports debug query parameter', async () => {
-    using medicus = new Medicus({
-      checkers: {
-        test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
-      }
-    });
-
     const app = new Hono();
-    app.get('/health', createHonoHealthCheckHandler(medicus));
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        checkers: {
+          test: () => ({ status: HealthStatus.HEALTHY, debug: { key: 'value' } })
+        }
+      })
+    );
 
     const response = await app.request('/health?debug=true');
     const body = await response.json();
@@ -43,14 +45,15 @@ describe('Hono Integration', () => {
   });
 
   it('supports last query parameter', async () => {
-    using medicus = new Medicus({
-      checkers: {
-        test: () => HealthStatus.HEALTHY
-      }
-    });
-
     const app = new Hono();
-    app.get('/health', createHonoHealthCheckHandler(medicus));
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        }
+      })
+    );
 
     await app.request('/health');
     const response = await app.request('/health?last=true');
@@ -61,14 +64,15 @@ describe('Hono Integration', () => {
   });
 
   it('supports simulate query parameter', async () => {
-    using medicus = new Medicus({
-      checkers: {
-        test: () => HealthStatus.HEALTHY
-      }
-    });
-
     const app = new Hono();
-    app.get('/health', createHonoHealthCheckHandler(medicus));
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        }
+      })
+    );
 
     const response = await app.request('/health?simulate=unhealthy');
     const body = await response.json();
@@ -78,16 +82,13 @@ describe('Hono Integration', () => {
   });
 
   it('allows custom headers', async () => {
-    using medicus = new Medicus({
-      checkers: {
-        test: () => HealthStatus.HEALTHY
-      }
-    });
-
     const app = new Hono();
     app.get(
       '/health',
-      createHonoHealthCheckHandler(medicus, {
+      createHonoHealthCheckHandler({
+        checkers: {
+          test: () => HealthStatus.HEALTHY
+        },
         headers: {
           'x-custom': 'test'
         }
@@ -98,5 +99,60 @@ describe('Hono Integration', () => {
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('x-custom'), 'test');
+  });
+
+  it('uses hono request context by default', async () => {
+    const app = new Hono();
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        debug: true,
+        checkers: {
+          requestContext(ctx) {
+            return {
+              status: HealthStatus.HEALTHY,
+              debug: {
+                path: ctx.req.path
+              }
+            };
+          }
+        }
+      })
+    );
+
+    const response = await app.request('/health?debug=true');
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.services.requestContext.debug.path, '/health');
+  });
+
+  it('respects explicit context override', async () => {
+    const app = new Hono();
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler({
+        context: {
+          origin: 'explicit-context'
+        },
+        debug: true,
+        checkers: {
+          requestContext(ctx) {
+            return {
+              status: HealthStatus.HEALTHY,
+              debug: {
+                origin: ctx.origin
+              }
+            };
+          }
+        }
+      })
+    );
+
+    const response = await app.request('/health?debug=true');
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.services.requestContext.debug.origin, 'explicit-context');
   });
 });

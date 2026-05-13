@@ -1,5 +1,6 @@
-import type { Handler } from 'hono';
-import type { Medicus } from '../medicus';
+import type { Context, Handler } from 'hono';
+import { Medicus } from '../medicus';
+import type { MedicusOption } from '../types';
 import { parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
@@ -18,6 +19,8 @@ export interface HonoHealthCheckOptions {
   headers?: Record<string, string>;
 }
 
+export type HonoMedicusOptions<Ctx = Context> = MedicusOption<Ctx> & HonoHealthCheckOptions;
+
 /**
  * Creates a complete Hono health check handler that parses query parameters
  * and returns a JSON response with the health check result.
@@ -30,31 +33,41 @@ export interface HonoHealthCheckOptions {
  * @example
  * ```ts
  * import { Hono } from 'hono';
- * import { Medicus, HealthStatus } from 'medicus';
+ * import { HealthStatus } from 'medicus';
  * import { createHonoHealthCheckHandler } from 'medicus/hono';
  *
  * const app = new Hono();
  *
- * const medicus = new Medicus({
+ * app.get(
+ *   '/health',
+ *   createHonoHealthCheckHandler({
  *   checkers: {
  *     database: () => HealthStatus.HEALTHY
  *   }
- * });
- *
- * app.get('/health', createHonoHealthCheckHandler(medicus));
+ *   })
+ * );
  * ```
  */
-export function createHonoHealthCheckHandler<Ctx = void>(
-  medicus: Medicus<Ctx>,
-  options: HonoHealthCheckOptions = {}
+export function createHonoHealthCheckHandler<Ctx = Context>(
+  options: HonoMedicusOptions<Ctx> = {}
 ): Handler {
-  const defaultDebug = !!options.debug;
+  const { context, debug, headers, ...medicusOptions } = options;
+  const hasExplicitContext = context !== undefined;
+  const medicus = new Medicus(medicusOptions);
+  if (hasExplicitContext) {
+    medicus.context = context;
+  }
+  const defaultDebug = !!debug;
   const defaultHeaders = {
     'cache-control': 'no-cache, no-store, must-revalidate',
-    ...options.headers
+    ...headers
   };
 
   return async function honoHealthCheckHandler(c) {
+    if (!hasExplicitContext) {
+      medicus.context = c as Ctx;
+    }
+
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
