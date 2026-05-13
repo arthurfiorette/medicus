@@ -212,11 +212,11 @@ export default defineConfig({
       },
       {
         text: 'llms.txt',
-        link: 'llms.txt'
+        link: '/llms.txt'
       },
       {
         text: 'llms-full.txt',
-        link: 'llms-full.txt'
+        link: '/llms-full.txt'
       }
     ]
   },
