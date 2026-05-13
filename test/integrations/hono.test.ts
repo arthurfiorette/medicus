@@ -108,7 +108,7 @@ describe('Hono Integration', () => {
       createHonoHealthCheckHandler({
         debug: true,
         checkers: {
-          pathValidator(ctx) {
+          pathChecker(ctx) {
             return {
               status: HealthStatus.HEALTHY,
               debug: {
@@ -124,7 +124,7 @@ describe('Hono Integration', () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(body.services.pathValidator.debug.path, '/health');
+    assert.equal(body.services.pathChecker.debug.path, '/health');
   });
 
   it('respects explicit context override', async () => {
@@ -137,7 +137,7 @@ describe('Hono Integration', () => {
         },
         debug: true,
         checkers: {
-          originValidator(ctx) {
+          customContextChecker(ctx) {
             return {
               status: HealthStatus.HEALTHY,
               debug: {
@@ -153,6 +153,6 @@ describe('Hono Integration', () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(body.services.originValidator.debug.origin, 'explicit-context');
+    assert.equal(body.services.customContextChecker.debug.origin, 'explicit-context');
   });
 });
