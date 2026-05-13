@@ -1,6 +1,6 @@
 import type { Context, Handler } from 'hono';
 import { Medicus } from '../medicus';
-import type { MedicusOption } from '../types';
+import type { HealthCheckResult, MedicusOption } from '../types';
 import { parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
@@ -54,10 +54,8 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
 ): HonoHealthCheckHandler {
   const { context, debug, headers, ...medicusOptions } = options;
   const hasExplicitContext = context !== undefined;
-  const medicus = new Medicus(medicusOptions);
-  if (hasExplicitContext) {
-    medicus.context = context;
-  }
+  const medicus = hasExplicitContext ? new Medicus({ ...medicusOptions, context }) : null;
+  let defaultLastCheck: HealthCheckResult | undefined;
   const defaultDebug = !!debug;
   const defaultHeaders = {
     'cache-control': 'no-cache, no-store, must-revalidate',
@@ -65,15 +63,23 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
   };
 
   const handler: Handler = async function honoHealthCheckHandler(c: Context) {
-    if (!hasExplicitContext) {
-      medicus.context = c as Ctx;
-    }
-
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
+    let check: Awaited<ReturnType<typeof performHttpCheck>>;
 
-    const check = await performHttpCheck(medicus, debug, last, simulate);
+    if (hasExplicitContext) {
+      check = await performHttpCheck(medicus!, debug, last, simulate);
+    } else {
+      const activeMedicus = createRequestMedicus(c as Ctx);
+
+      try {
+        check = await performHttpCheck(activeMedicus, debug, last, simulate);
+        defaultLastCheck = activeMedicus.lastCheck;
+      } finally {
+        activeMedicus[Symbol.dispose]();
+      }
+    }
 
     for (const [key, value] of Object.entries(defaultHeaders)) {
       c.header(key, value);
@@ -84,7 +90,22 @@ export function createHonoHealthCheckHandler<Ctx = Context>(
 
   return Object.assign(handler, {
     [Symbol.dispose]() {
-      return medicus[Symbol.dispose]();
+      if (medicus) {
+        medicus[Symbol.dispose]();
+      }
     }
   });
+
+  function createRequestMedicus(requestContext: Ctx): Medicus<Ctx> {
+    const scopedMedicus = new Medicus({
+      ...medicusOptions,
+      context: requestContext
+    });
+
+    if (defaultLastCheck) {
+      scopedMedicus.lastCheck = defaultLastCheck;
+    }
+
+    return scopedMedicus;
+  }
 }

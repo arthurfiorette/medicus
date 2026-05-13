@@ -108,11 +108,11 @@ describe('Hono Integration', () => {
       createHonoHealthCheckHandler({
         debug: true,
         checkers: {
-          pathChecker(ctx) {
+          pathChecker(context) {
             return {
               status: HealthStatus.HEALTHY,
               debug: {
-                path: ctx.req.path
+                path: context.req.path
               }
             };
           }
@@ -137,11 +137,11 @@ describe('Hono Integration', () => {
         },
         debug: true,
         checkers: {
-          customContextChecker(ctx) {
+          customContextChecker(context) {
             return {
               status: HealthStatus.HEALTHY,
               debug: {
-                origin: ctx.origin
+                origin: context.origin
               }
             };
           }
