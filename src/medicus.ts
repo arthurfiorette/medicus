@@ -224,13 +224,15 @@ export class Medicus<Ctx = void> {
    *
    * **This function never throws**
    */
-  async performCheck(debug = false, context?: Ctx): Promise<HealthCheckResult> {
+  async performCheck(
+    debug = false,
+    context: Ctx | undefined = this.context
+  ): Promise<HealthCheckResult> {
     let status = HealthStatus.HEALTHY;
     const services: Record<string, DetailedHealthCheck> = {};
-    const activeContext = context ?? this.context;
 
     for (const [serviceName, checker] of this.checkers) {
-      const result = await this.executeChecker(checker, activeContext);
+      const result = await this.executeChecker(checker, context);
 
       if (result.status === HealthStatus.UNHEALTHY) {
         status = HealthStatus.UNHEALTHY;
@@ -262,7 +264,7 @@ export class Medicus<Ctx = void> {
    */
   protected async executeChecker(
     checker: HealthChecker<Ctx>,
-    context = this.context
+    context: Ctx | undefined = this.context
   ): Promise<DetailedHealthCheck> {
     const signal = AbortSignal.timeout(this.checkerTimeoutMs);
 

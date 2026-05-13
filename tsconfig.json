@@ -11,6 +11,7 @@
     "importHelpers": true,
     "outDir": "dist",
     "stripInternal": true,
+    "types": ["node"],
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

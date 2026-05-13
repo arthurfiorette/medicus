@@ -3,6 +3,8 @@ node_modules
 coverage
 docs/.vitepress/cache
 
+*.tsbuildinfo
+
 # generated files
 /.npmignore
 /*.js

@@ -25,7 +25,7 @@ export type MedicusVariables<
   I extends Input = Input
 > = {
   Variables: {
-    medicus: Medicus<Context<E, P, I>>;
+    medicus: Medicus<Context<MedicusVariables<E, P, I>, P, I>>;
   };
 };
 
@@ -33,13 +33,14 @@ export type HonoMedicusOptions<
   E extends Env = Env,
   P extends string = string,
   I extends Input = Input
-> = Omit<MedicusOption<Context<E, P, I>>, 'context'> & HonoHealthCheckOptions;
+> = Omit<MedicusOption<Context<MedicusVariables<E, P, I>, P, I>>, 'context'> &
+  HonoHealthCheckOptions;
 
 export type HonoHealthCheckHandler<
   E extends Env = Env,
   P extends string = string,
   I extends Input = Input
-> = Handler<E, P, I>;
+> = Handler<MedicusVariables<E, P, I>, P, I>;
 
 /**
  * Creates a complete Hono health check handler that parses query parameters
@@ -78,28 +79,25 @@ export function createHonoHealthCheckHandler<
   E extends Env = Env,
   P extends string = string,
   I extends Input = Input
->(options: HonoMedicusOptions<E, P, I> = {}): HonoHealthCheckHandler<E, P, I> {
-  const {
-    context: _ignoredContext,
-    debug,
-    headers,
-    ...medicusOptions
-  } = options as HonoMedicusOptions<E, P, I> & { context?: unknown };
+>({
+  debug,
+  headers,
+  ...medicusOptions
+}: HonoMedicusOptions<E, P, I> = {}): HonoHealthCheckHandler<E, P, I> {
   const defaultDebug = !!debug;
   const defaultHeaders = {
     'cache-control': 'no-cache, no-store, must-revalidate',
     ...headers
   };
-  const medicus = new Medicus<Context<E, P, I>>({
-    ...(medicusOptions as MedicusOption<Context<E, P, I>>),
-    context: null as unknown as Context<E, P, I>
-  });
+  const medicus = new Medicus<Context<MedicusVariables<E, P, I>, P, I>>(medicusOptions);
 
-  const handler: Handler<E, P, I> = async function honoHealthCheckHandler(c: Context<E, P, I>) {
+  return async function honoHealthCheckHandler(c) {
     const last = !!c.req.query('last');
     const debug = !!c.req.query('debug') || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
-    (c as any).set('medicus', medicus);
+
+    c.set('medicus', medicus);
+
     const check = await performHttpCheck(medicus, debug, last, simulate, c);
 
     for (const [key, value] of Object.entries(defaultHeaders)) {
@@ -108,6 +106,4 @@ export function createHonoHealthCheckHandler<
 
     return c.json(check.result, check.status as 200 | 503);
   };
-
-  return handler;
 }

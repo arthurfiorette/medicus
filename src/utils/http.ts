@@ -41,11 +41,7 @@ export async function performHttpCheck<Ctx>(
   }
 
   if (!result) {
-    if (context === undefined) {
-      result = await medicus.performCheck(isDebug);
-    } else {
-      result = await medicus.performCheck(isDebug, context);
-    }
+    result = await medicus.performCheck(isDebug, context);
   }
 
   if (simulateStatus) {

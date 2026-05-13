@@ -21,7 +21,7 @@ describe('Hono Integration', () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-cache, no-store, must-revalidate');
 
-    const body = await response.json();
+    const body: any = await response.json();
     assert.equal(body.status, HealthStatus.HEALTHY);
   });
 
@@ -37,7 +37,7 @@ describe('Hono Integration', () => {
     );
 
     const response = await app.request('/health?debug=true');
-    const body = await response.json();
+    const body: any = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(body.status, HealthStatus.HEALTHY);
@@ -57,7 +57,7 @@ describe('Hono Integration', () => {
 
     await app.request('/health');
     const response = await app.request('/health?last=true');
-    const body = await response.json();
+    const body: any = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(body.status, HealthStatus.HEALTHY);
@@ -75,7 +75,7 @@ describe('Hono Integration', () => {
     );
 
     const response = await app.request('/health?simulate=unhealthy');
-    const body = await response.json();
+    const body: any = await response.json();
 
     assert.equal(response.status, 503);
     assert.equal(body.status, HealthStatus.UNHEALTHY);
@@ -121,7 +121,7 @@ describe('Hono Integration', () => {
     );
 
     const response = await app.request('/health?debug=true');
-    const body = await response.json();
+    const body: any = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(body.services.pathChecker.debug.path, '/health');

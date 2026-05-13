@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, RouteOptions } from 'fastify';
 import fp from 'fastify-plugin';
+import type { Logger } from 'pino';
 import { Medicus } from '../medicus';
 import { HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
 import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
@@ -54,7 +55,7 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
   async (fastify, { route, debug = false, ...medicusOptions }) => {
     // Adds fastify error logger
     medicusOptions.plugins ??= [];
-    medicusOptions.plugins.push(pinoMedicusPlugin(fastify.log));
+    medicusOptions.plugins.push(pinoMedicusPlugin(fastify.log as Logger));
 
     fastify.decorate(
       'medicus',

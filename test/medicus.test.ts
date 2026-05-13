@@ -269,10 +269,10 @@ describe('Medicus', () => {
     });
 
     const defaultResult = await medicus.performCheck(true);
-    assert.equal(defaultResult.services.contextChecker.debug?.source, 'default');
+    assert.equal(defaultResult.services.contextChecker?.debug?.source, 'default');
 
     const overriddenResult = await medicus.performCheck(true, { source: 'request' });
-    assert.equal(overriddenResult.services.contextChecker.debug?.source, 'request');
+    assert.equal(overriddenResult.services.contextChecker?.debug?.source, 'request');
   });
 
   it('logs when an error happens', async () => {

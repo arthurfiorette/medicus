@@ -270,6 +270,7 @@ describe('HTTP Integration', () => {
         }
         res.statusCode = 404;
         res.end('Not Found');
+        return;
       });
       servers.push(server);
 
