@@ -23,8 +23,8 @@ export type MedicusVariables<
   E extends Env = Env,
   P extends string = string,
   I extends Input = Input
-> = {
-  Variables: {
+> = E & {
+  Variables: E['Variables'] & {
     medicus: Medicus<Context<MedicusVariables<E, P, I>, P, I>>;
   };
 };
