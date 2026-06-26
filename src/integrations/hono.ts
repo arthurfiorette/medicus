@@ -68,9 +68,28 @@ export type HonoHealthCheckHandler<
  * app.get(
  *   '/health',
  *   createHonoHealthCheckHandler({
- *   checkers: {
- *     database: () => HealthStatus.HEALTHY
- *   }
+ *     checkers: {
+ *       database: () => HealthStatus.HEALTHY
+ *     }
+ *   })
+ * );
+ *
+ * type App = {
+ *   Bindings: { RELEASE: string };
+ *   Variables: { db: { healthCheck(): Promise<void> } };
+ * };
+ *
+ * const typedApp = new Hono<App>();
+ *
+ * typedApp.get(
+ *   '/health',
+ *   createHonoHealthCheckHandler<App>({
+ *     checkers: {
+ *       async database(ctx) {
+ *         await ctx.get('db').healthCheck();
+ *         return HealthStatus.HEALTHY;
+ *       }
+ *     }
  *   })
  * );
  * ```

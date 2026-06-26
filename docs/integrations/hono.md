@@ -34,6 +34,49 @@ type AppEnv = MedicusVariables;
 
 The health handler does `c.set('medicus', medicus)` so other middleware/routes can read the same instance from request context.
 
+If your Hono app defines custom `Bindings` or `Variables`, pass the same app type to `createHonoHealthCheckHandler`.
+TypeScript cannot infer that type from the surrounding `app.get(...)` call, so the explicit generic is required for typed checker context.
+
+```ts
+import { Hono } from 'hono';
+import { HealthStatus } from 'medicus';
+import { createHonoHealthCheckHandler } from 'medicus/hono';
+
+type App = {
+  Bindings: {
+    RELEASE: string;
+  };
+  Variables: {
+    db: {
+      healthCheck(): Promise<void>;
+    };
+    requestId: string;
+  };
+};
+
+const app = new Hono<App>();
+
+app.get(
+  '/health',
+  createHonoHealthCheckHandler<App>({
+    debug: true,
+    checkers: {
+      async database(ctx) {
+        await ctx.get('db').healthCheck();
+
+        return {
+          status: HealthStatus.HEALTHY,
+          debug: {
+            release: ctx.env.RELEASE,
+            requestId: ctx.get('requestId')
+          }
+        };
+      }
+    }
+  })
+);
+```
+
 ## Edge Runtime Note
 
 On edge runtimes (for example Cloudflare Workers), application instances are typically spun up per request.
