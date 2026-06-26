@@ -148,4 +148,62 @@ describe('Hono Integration', () => {
     assert.equal(response.status, 200);
     assert.equal(hasMedicusOnContext, true);
   });
+
+  it('preserves custom Hono app bindings and variables in checkers', async () => {
+    type App = {
+      Bindings: {
+        RELEASE: string;
+      };
+      Variables: {
+        db: {
+          healthCheck(): Promise<void>;
+        };
+        requestId: string;
+      };
+    };
+
+    const app = new Hono<App>();
+    let checkedDb = false;
+
+    app.use('*', async (context, next) => {
+      context.set('db', {
+        async healthCheck() {
+          checkedDb = true;
+        }
+      });
+      context.set('requestId', 'req-1');
+
+      await next();
+    });
+
+    app.get(
+      '/health',
+      createHonoHealthCheckHandler<App>({
+        debug: true,
+        checkers: {
+          async typedContext(context) {
+            await context.get('db').healthCheck();
+
+            return {
+              status: HealthStatus.HEALTHY,
+              debug: {
+                hasMedicus: context.get('medicus') instanceof Medicus,
+                release: context.env.RELEASE,
+                requestId: context.get('requestId')
+              }
+            };
+          }
+        }
+      })
+    );
+
+    const response = await app.request('/health', undefined, { RELEASE: 'test' });
+    const body: any = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(checkedDb, true);
+    assert.equal(body.services.typedContext.debug.hasMedicus, true);
+    assert.equal(body.services.typedContext.debug.release, 'test');
+    assert.equal(body.services.typedContext.debug.requestId, 'req-1');
+  });
 });
