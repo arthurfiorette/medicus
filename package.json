@@ -1,6 +1,6 @@
 {
   "name": "medicus",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Flexible, framework-agnostic health check library for Node.js and TypeScript. Liveness and readiness checks with popular server integrations.",
   "homepage": "https://medicus.js.org",
   "keywords": [
