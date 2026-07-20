@@ -1,7 +1,33 @@
 {
   "name": "medicus",
-  "version": "1.4.1",
-  "description": "A flexible and agnostic health check library for Node.js.",
+  "version": "1.5.0",
+  "description": "Flexible, framework-agnostic health check library for Node.js and TypeScript. Liveness and readiness checks with Fastify, Hono, Avvio and plain HTTP integrations.",
+  "homepage": "https://medicus.js.org",
+  "keywords": [
+    "health check",
+    "healthcheck",
+    "health-check",
+    "health",
+    "liveness",
+    "readiness",
+    "probe",
+    "kubernetes",
+    "k8s",
+    "monitoring",
+    "uptime",
+    "heartbeat",
+    "fastify",
+    "fastify-plugin",
+    "hono",
+    "tanstack-start",
+    "avvio",
+    "pino",
+    "node",
+    "nodejs",
+    "typescript",
+    "diagnostics",
+    "observability"
+  ],
   "bugs": {
     "url": "https://github.com/arthurfiorette/medicus/issues"
   },
@@ -37,28 +63,31 @@
     "test": "c8 --reporter lcov --reporter text tsx --enable-source-maps --test test/**/*.test.ts"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.49",
+    "@sinclair/typebox": "^0.34.52",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@arthurfiorette/biomejs-config": "^2.0.1",
-    "@biomejs/biome": "^2.4.15",
-    "@fastify/under-pressure": "^9.0.3",
-    "@shikijs/vitepress-twoslash": "^4.0.2",
-    "@types/node": "^24.12.4",
-    "c8": "^11.0.0",
-    "hono": "^4.12.18",
+    "@biomejs/biome": "^2.5.4",
+    "@fastify/under-pressure": "^9.1.0",
+    "@nolebase/vitepress-plugin-og-image": "^2.18.2",
+    "@shikijs/vitepress-twoslash": "^4.3.1",
+    "@tanstack/react-start": "^1.168.32",
+    "@types/node": "^26.1.1",
+    "c8": "^12.0.0",
+    "close-with-grace": "^2.5.0",
+    "hono": "^4.12.31",
     "husky": "^9.1.7",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.1",
     "typescript": "^6.0.3",
     "vitepress": "^1.6.4",
-    "vitepress-plugin-llms": "^1.12.2"
+    "vitepress-plugin-llms": "^1.13.3"
   },
   "peerDependencies": {
-    "avvio": "^9.2.0",
-    "fastify": "^5.8.5",
-    "fastify-plugin": "^5.1.0",
-    "hono": "^4.12.18",
+    "avvio": "^9.3.0",
+    "fastify": "^5.10.0",
+    "fastify-plugin": "^6.0.0 || ^5.1.0",
+    "hono": "^4.12.31",
     "pino": "^10.3.1"
   },
   "peerDependenciesMeta": {
@@ -78,7 +107,7 @@
       "optional": true
     }
   },
-  "packageManager": "pnpm@11.1.1",
+  "packageManager": "pnpm@11.15.1",
   "engines": {
     "node": ">=18"
   }

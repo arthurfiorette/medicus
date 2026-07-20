@@ -1,3 +1,8 @@
+---
+title: Node.js HTTP Health Check Endpoint
+description: Expose a /health endpoint from a plain node:http server without any framework. Works for Kubernetes probes, Docker HEALTHCHECK and load balancers.
+---
+
 # HTTP Integration
 
 The HTTP integration provides a request handler for Node.js HTTP servers.

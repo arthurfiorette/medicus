@@ -1,3 +1,8 @@
+---
+title: Pino Logger Integration
+description: Structured JSON logging for health check errors and unhealthy statuses using Pino, the fast Node.js logger.
+---
+
 # Pino
 
 Pino is a fast and lightweight JSON logger designed for both development and production environments. It offers structured logging with advanced features for enhanced debugging and monitoring.

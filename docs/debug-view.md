@@ -1,3 +1,8 @@
+---
+title: 'Debug View: Detailed Health Check Output'
+description: Expose detailed diagnostic data (CPU, memory, latency) in your health check response, gated behind a debug flag so sensitive details stay protected.
+---
+
 # Debug View
 
 Medicus allows you to include detailed debugging information for health checkers that return [detailed results](./checkers.md#detailed-result). By default, this debugging data is not included in the check results, but you can enable it by setting the `debug` option to `true`.

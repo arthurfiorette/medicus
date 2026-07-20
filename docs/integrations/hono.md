@@ -1,3 +1,8 @@
+---
+title: Hono Health Check Route
+description: Add a health check endpoint to Hono on Node.js or edge runtimes with a ready-made route handler and typed request context.
+---
+
 # Hono <Badge type="warning" text="Third-Party" />
 
 Hono is a small, fast, and standards-based web framework that runs on Node.js and edge runtimes.
