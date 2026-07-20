@@ -303,12 +303,18 @@ interface TestResponse {
 
 function makeRequest(server: Server, path: string): Promise<TestResponse> {
   return new Promise((resolve, reject) => {
-    const port = getAvailablePort();
+    // port 0 lets the OS assign a free ephemeral port, avoiding
+    // EADDRINUSE flakes on shared CI runners
+    const serverInstance = server.listen(0, () => {
+      const address = serverInstance.address();
 
-    const serverInstance = server.listen(port, () => {
+      if (!address || typeof address === 'string') {
+        return reject(new Error('Expected server to listen on a TCP port'));
+      }
+
       const options = {
         hostname: 'localhost',
-        port: port,
+        port: address.port,
         path: path,
         method: 'GET'
       };
@@ -340,9 +346,4 @@ function makeRequest(server: Server, path: string): Promise<TestResponse> {
       req.end();
     });
   });
-}
-
-let portCounter = 51123;
-function getAvailablePort(): number {
-  return portCounter++;
 }
