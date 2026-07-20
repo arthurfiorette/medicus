@@ -48,6 +48,7 @@
     "@tanstack/react-start": "^1.168.32",
     "@types/node": "^24.12.4",
     "c8": "^11.0.0",
+    "close-with-grace": "^2.5.0",
     "hono": "^4.12.18",
     "husky": "^9.1.7",
     "tsx": "^4.21.0",

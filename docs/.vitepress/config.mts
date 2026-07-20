@@ -198,19 +198,16 @@ export default defineConfig({
         text: 'Guides',
         items: mapSideItems([
           {
-            text: 'Non exposed services',
-            link: 'non-exposed-services.md',
-            todo: true
+            text: 'Background Workers',
+            link: 'background-workers.md'
           },
           {
             text: 'SQL Databases',
-            link: 'sql-databases.md',
-            todo: true
+            link: 'sql-databases.md'
           },
           {
-            text: 'Redis',
-            link: 'redis.md',
-            todo: true
+            text: 'Key-Value Stores',
+            link: 'key-value-stores.md'
           }
         ])
       },
