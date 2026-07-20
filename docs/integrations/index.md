@@ -16,3 +16,4 @@ These integrations allow you to seamlessly connect `Medicus` with external libra
 - **[Avvio](./avvio.md):** Hooks `Medicus` into the `Avvio` lifecycle to initiate health checks after the server is ready.
 - **[Fastify](./fastify.md):** Attaches `Medicus` to `Fastify` instance lifecycle hooks for streamlined integration.
 - **[Hono](./hono.md):** Exposes a ready-to-use health check route handler for Hono applications.
+- **[TanStack Start](./tanstack-start.md):** Provides a health check handler for TanStack Start server functions.

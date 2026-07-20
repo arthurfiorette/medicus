@@ -180,6 +180,10 @@ export default defineConfig({
             link: 'hono.md'
           },
           {
+            text: 'TanStack Start',
+            link: 'tanstack-start.md'
+          },
+          {
             text: 'Avvio',
             link: 'avvio.md'
           },

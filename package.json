@@ -1,6 +1,6 @@
 {
   "name": "medicus",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "A flexible and agnostic health check library for Node.js.",
   "bugs": {
     "url": "https://github.com/arthurfiorette/medicus/issues"
@@ -45,6 +45,7 @@
     "@biomejs/biome": "^2.4.15",
     "@fastify/under-pressure": "^9.0.3",
     "@shikijs/vitepress-twoslash": "^4.0.2",
+    "@tanstack/react-start": "^1.168.32",
     "@types/node": "^24.12.4",
     "c8": "^11.0.0",
     "hono": "^4.12.18",
