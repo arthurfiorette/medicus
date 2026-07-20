@@ -12,6 +12,10 @@ describe('Express Integration', () => {
     await Promise.all(servers.map((server) => closeServer(server)));
   });
 
+  it('creates a handler without options', () => {
+    assert.ok(createExpressHealthCheckHandler().medicus instanceof Medicus);
+  });
+
   it('handles health requests with Express request context', async () => {
     const app = express();
     const handler = createExpressHealthCheckHandler({

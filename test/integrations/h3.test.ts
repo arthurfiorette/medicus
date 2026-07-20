@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createApp, toWebHandler } from 'h3';
+import { createApp, type H3Event, toWebHandler } from 'h3';
 import { HealthStatus, Medicus } from '../../src';
 import { createH3HealthCheckHandler } from '../../src/integrations/h3';
 
@@ -55,5 +55,22 @@ describe('H3 and Nitro Integration', () => {
     assert.equal(cached.status, 200);
     assert.equal(calls, 2);
     assert.equal(simulated.status, 503);
+  });
+
+  it('supports H3 2 event URLs and the legacy empty URL fallback', async () => {
+    const modernHandler = createH3HealthCheckHandler({
+      checkers: { service: () => HealthStatus.HEALTHY }
+    });
+    const modernResponse = await modernHandler({
+      url: new URL('http://localhost/health?simulate=unhealthy')
+    } as unknown as H3Event);
+
+    const legacyHandler = createH3HealthCheckHandler();
+    const legacyResponse = await legacyHandler({
+      node: { req: { url: undefined } }
+    } as unknown as H3Event);
+
+    assert.equal(modernResponse.status, 503);
+    assert.equal(legacyResponse.status, 200);
   });
 });
