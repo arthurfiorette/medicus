@@ -1,10 +1,14 @@
 ---
 layout: home
 
+title: Medicus, the Node.js Health Check Library
+titleTemplate: false
+description: Framework-agnostic health check library for Node.js and TypeScript. Ready-made health check endpoints for Fastify, Hono, plain HTTP and background workers.
+
 hero:
   name: 'Medicus'
-  text: 'Flexible and agnostic health checks.'
-  tagline: Ensure the post-deployment health of your APIs and Services.
+  text: 'Health checks for Node.js.'
+  tagline: Flexible and framework-agnostic. Post-deployment confidence for your APIs, services and workers.
   actions:
     - theme: brand
       text: Get Started

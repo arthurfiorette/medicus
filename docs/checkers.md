@@ -1,3 +1,8 @@
+---
+title: 'Checkers: Writing Health Check Functions'
+description: Write sync or async health check functions in TypeScript with timeouts, AbortSignal support, healthy/degraded/unhealthy statuses and detailed debug results.
+---
+
 # Checkers
 
 A **Checker** is a function responsible for assessing the health of a specific sub-service or component within your application. These functions can be either `async` or `sync` and must return one of the following:
@@ -51,7 +56,7 @@ medicus.addChecker({
 
 ## Using `HealthStatus`
 
-For simpler health status checks, you can directly return a value from the `HealthStatus` enum.
+For simpler health status checks, you can directly return a value from the `HealthStatus` enum. Returning `DEGRADED` enables graceful degradation: the service keeps serving traffic while monitoring flags it as impaired.
 
 ```ts
 import { HealthStatus } from 'medicus';

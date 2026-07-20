@@ -1,3 +1,8 @@
+---
+title: Avvio Health Check Plugin
+description: 'Hook Medicus health checks into the Avvio boot lifecycle: automatic registration, background checks and heartbeat reporting for plugin-based Node.js apps.'
+---
+
 # Avvio <Badge type="warning" text="Third-Party" />
 
 Avvio is a highly performant application booting and plugin system, designed to manage the loading and bootstrapping of asynchronous components in Node applications. It's the core plugin system used by Fastify and other frameworks, providing a reliable and type-safe way to handle plugin registration and dependencies.

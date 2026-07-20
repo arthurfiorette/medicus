@@ -5,3 +5,6 @@ autoInstallPeers: true
 enablePrePostScripts: true
 packageManagerStrict: false
 shellEmulator: true
+
+overrides:
+  '@shikijs/types': ^4.3.1

@@ -1,3 +1,8 @@
+---
+title: Scheduled Background Health Checks
+description: Run Node.js health checks on an interval instead of per request — background scheduling, cached results, eager startup checks and check event listeners.
+---
+
 # Background Checks
 
 In some cases, you might not want to manually trigger checks with every `performCheck` call. Instead, you may prefer to run checks on a consistent schedule. This is where **background checks** come into play.

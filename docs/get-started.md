@@ -1,6 +1,11 @@
+---
+title: Get Started with Node.js Health Checks
+description: Install Medicus and add a typed health check endpoint to any Node.js or TypeScript application in minutes. Works with Fastify, Hono, plain HTTP and more.
+---
+
 # Get Started
 
-Implementing health checks and collecting their output is straightforward, but **Medicus** elevates this process to a new level.
+Implementing health checks in a Node.js or TypeScript application and collecting their output is straightforward, but **Medicus** elevates this process to a new level.
 
 Medicus offers more than just simplicity; it delivers an extensive ecosystem of **ready-to-use integrations**, **comprehensive documentation**, and **native compatibility** with popular libraries and frameworks.
 

@@ -39,7 +39,7 @@ Medicus is a comprehensive, agnostic health check library for Node.js. It provid
 
 <br />
 
-[Read the docs to **Learn More**.](https://arthur.run/medicus)
+[Read the docs to **Learn More**.](https://medicus.js.org)
 
 <br />
 <br />

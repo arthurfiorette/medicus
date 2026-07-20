@@ -1,6 +1,11 @@
+---
+title: Health Checks for Background Workers & Cron Jobs
+description: 'Monitor Node.js queue workers, cron runners and schedulers without an HTTP server: worker heartbeats, uptime monitoring and graceful shutdown.'
+---
+
 # Background Workers
 
-Queue consumers, cron runners and schedulers depend on databases and brokers just like any API — but there is no HTTP server to attach a health route to.
+Queue consumers, cron runners and schedulers depend on databases and brokers just like any API, but there is no HTTP server to attach a health route to.
 
 Medicus works without a web framework. For these processes, the strategy changes from **pull** (an orchestrator polls an endpoint) to **push**: the process checks itself on an interval and reports the result somewhere.
 
@@ -26,9 +31,9 @@ const medicus = new Medicus<YourContext>({
 
 ## Uptime monitoring with heartbeats
 
-Logs tell you a check failed — they don't tell you the process **died**. A crashed worker logs nothing.
+Logs tell you a check failed. They don't tell you the process **died**, and a crashed worker logs nothing.
 
-Heartbeat monitoring inverts the model: the worker pings an uptime monitor (such as [healthchecks.io](https://healthchecks.io/), [Better Stack](https://betterstack.com/) or [Cronitor](https://cronitor.io/)) **only when healthy**, and the monitor alerts when pings *stop arriving*. This "dead man's switch" covers both failure modes with one mechanism: a failing checker and a dead process both go silent.
+Heartbeat monitoring inverts the model: the worker pings an uptime monitor (such as [healthchecks.io](https://healthchecks.io/), [Better Stack](https://betterstack.com/) or [Cronitor](https://cronitor.io/)) **only when healthy**, and the monitor alerts when pings *stop arriving*. This "dead man's switch" covers both failure modes with one mechanism: whether a checker fails or the process dies, the worker heartbeat goes silent and the monitor alerts.
 
 ```ts
 import { Medicus, HealthStatus } from 'medicus';
@@ -63,7 +68,7 @@ Deploys are the other flapping source: a restart resets the timer, delaying the 
 
 ## Minimal HTTP endpoint
 
-If your orchestrator requires a pollable probe (Kubernetes `livenessProbe`, Docker `HEALTHCHECK`), the [HTTP integration](../integrations/http.md) exposes one endpoint with a bare `node:http` server — no framework needed:
+If your orchestrator requires a pollable probe (a Kubernetes liveness or readiness probe, Docker `HEALTHCHECK`), the [HTTP integration](../integrations/http.md) exposes one endpoint with a bare `node:http` server, no framework needed:
 
 ```ts
 import { createServer } from 'node:http';
@@ -87,18 +92,18 @@ Combined with background checks, the endpoint can serve the cached result via `?
 
 ## Using an existing plugin system
 
-If the worker is already built on a plugin system, prefer the matching integration — it handles registration, context typing and stopping the background timer on shutdown:
+If the worker is already built on a plugin system, prefer the matching integration, since it handles registration, context typing and stopping the background timer on shutdown:
 
-- [Avvio](../integrations/avvio.md) — `avvioMedicusPlugin` for plain avvio applications.
-- [Fastify](../integrations/fastify.md) with `route: false` — some workers use Fastify purely as a dependency-injection container without ever calling `listen()`; this registers checkers and background checks without exposing any route.
+- [Avvio](../integrations/avvio.md) provides `avvioMedicusPlugin` for plain avvio applications.
+- [Fastify](../integrations/fastify.md) with `route: false` suits workers that use Fastify purely as a dependency-injection container without ever calling `listen()`. It registers checkers and background checks without exposing any route.
 
 ## Graceful shutdown
 
-The background check timer is `unref()`'d, so it never keeps the process alive — no cleanup is required just to exit.
+The background check timer is `unref()`'d, so it never keeps the process alive and no cleanup is required just to exit.
 
-Still, stop it first in your shutdown handler: teardown takes time, and a check firing mid-shutdown runs checkers against half-closed connections — producing spurious unhealthy logs, or a skipped heartbeat right as the worker cleanly restarts. The integrations above already do this through their close hooks.
+Still, stop it first in your shutdown handler: teardown takes time, and a check firing mid-shutdown runs checkers against half-closed connections, producing spurious unhealthy logs or a skipped heartbeat right as the worker cleanly restarts. The integrations above already do this through their close hooks.
 
-When using the `Medicus` class directly, [`close-with-grace`](https://github.com/mcollina/close-with-grace) is a good fit for workers: it listens for `SIGINT`/`SIGTERM`, `uncaughtException` and `unhandledRejection`, and force-exits if cleanup exceeds a delay — so a hung database connection can't keep a dying worker alive forever.
+When using the `Medicus` class directly, [`close-with-grace`](https://github.com/mcollina/close-with-grace) is a good fit for workers: it listens for `SIGINT`/`SIGTERM`, `uncaughtException` and `unhandledRejection`, and force-exits if cleanup exceeds a delay, so a hung database connection can't keep a dying worker alive forever.
 
 ```ts
 import closeWithGrace from 'close-with-grace';

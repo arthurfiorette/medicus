@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { buildEndGenerateOpenGraphImages } from '@nolebase/vitepress-plugin-og-image/vitepress';
 import { transformerTwoslash } from '@shikijs/vitepress-twoslash';
 import { createFileSystemTypesCache } from '@shikijs/vitepress-twoslash/cache-fs';
 import { defineConfig } from 'vitepress';
@@ -14,12 +15,64 @@ export default defineConfig({
   appearance: true,
   lastUpdated: true,
 
+  sitemap: {
+    hostname: 'https://medicus.js.org'
+  },
+
+  // Per-page canonical + Open Graph tags. Canonicals matter here because the
+  // llms plugin deploys raw .md twins next to every .html page.
+  transformPageData(pageData) {
+    const canonicalUrl = `https://medicus.js.org/${pageData.relativePath}`
+      .replace(/index\.md$/, '')
+      .replace(/\.md$/, '');
+
+    pageData.frontmatter.head ??= [];
+    pageData.frontmatter.head.push(
+      ['link', { rel: 'canonical', href: canonicalUrl }],
+      ['meta', { property: 'og:url', content: canonicalUrl }],
+      [
+        'meta',
+        {
+          property: 'og:title',
+          content: pageData.title ? `${pageData.title} | Medicus` : 'Medicus'
+        }
+      ],
+      ['meta', { property: 'og:description', content: pageData.description || description }]
+    );
+
+    // Pages outside the sidebar don't get a per-page card from the og-image
+    // plugin, so fall back to the pre-rendered home card (docs/public/og-home.png)
+    if (pageData.relativePath === 'index.md' || pageData.relativePath === 'integrations/index.md') {
+      pageData.frontmatter.head.push([
+        'meta',
+        { property: 'og:image', content: 'https://medicus.js.org/og-home.png' }
+      ]);
+    }
+  },
+
+  // Renders a social media card (og:image / twitter:image) per page
+  async buildEnd(siteConfig) {
+    await buildEndGenerateOpenGraphImages({
+      baseUrl: 'https://medicus.js.org',
+      category: {
+        byPathPrefix: [
+          { prefix: '/integrations', text: 'Integrations' },
+          { prefix: '/guides', text: 'Guides' },
+          { prefix: '/', text: 'Documentation' }
+        ],
+        fallbackWithFrontmatter: true
+      }
+    })(siteConfig);
+  },
+
   vite: {
     plugins: [
       llmstxt({
         domain: 'https://medicus.js.org',
         description,
-        title: 'Medicus'
+        title: 'Medicus',
+        // Placeholder page, noise for AI consumers
+        ignoreFiles: ['todo.md']
       })
     ]
   },
@@ -137,6 +190,10 @@ export default defineConfig({
             link: 'get-started.md'
           },
           {
+            text: 'AI Support',
+            link: 'ai-support.md'
+          },
+          {
             text: 'Checkers',
             link: 'checkers.md'
           },
@@ -210,14 +267,6 @@ export default defineConfig({
             link: 'key-value-stores.md'
           }
         ])
-      },
-      {
-        text: 'llms.txt',
-        link: '/llms.txt'
-      },
-      {
-        text: 'llms-full.txt',
-        link: '/llms-full.txt'
       }
     ]
   },
@@ -227,9 +276,14 @@ export default defineConfig({
       {
         rel: 'icon',
         href: '/medicus.svg',
-        type: 'image/x-icon'
+        type: 'image/svg+xml'
       }
     ],
+
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'Medicus' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:site', content: '@arthurfiorette' }],
 
     [
       'script',

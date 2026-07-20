@@ -1,3 +1,8 @@
+---
+title: Extending Medicus with Plugins
+description: Create reusable health check plugins that add checkers, modify options and hook into the Medicus lifecycle.
+---
+
 # Plugins
 
 Plugins in `Medicus` serve as the primary mechanism to customize and extend its functionality. They enable integration with third-party services or the addition of new features tailored to your application's requirements.

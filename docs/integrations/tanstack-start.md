@@ -1,3 +1,8 @@
+---
+title: TanStack Start Health Check Handler
+description: Type-safe health check server function for TanStack Start, plus a public HTTP endpoint pattern for uptime monitors and load balancers.
+---
+
 # TanStack Start <Badge type="warning" text="Third-Party" />
 
 TanStack Start is a full-stack React (and Solid) framework built on TanStack Router. Its [server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions) are type-safe RPC endpoints that run only on the server.

@@ -1,3 +1,8 @@
+---
+title: Health Check Logging & Error Handling
+description: Log failed health checks in Node.js with a custom error logger or structured Pino logging, for automatic background checks and manual checks alike.
+---
+
 # Logger
 
 Medicus provides robust support for logging during health checks. You can configure custom logger functions to centralize and customize logging for your system.

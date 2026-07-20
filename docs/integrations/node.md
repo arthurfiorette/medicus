@@ -1,4 +1,9 @@
-# Node
+---
+title: Node.js Process Health Checker
+description: Built-in Node.js process health check reporting CPU usage, memory, load average and uptime diagnostics for your health endpoint.
+---
+
+# Node.js Process Health
 
 The `nodeMedicusPlugin` is a plugin that adds a health check for the Node process, with optional system diagnostics. It provides detailed system information, such as CPU usage, memory stats, load averages, and uptime when the `debug` flag is enabled (which is set to `true` by default).
 

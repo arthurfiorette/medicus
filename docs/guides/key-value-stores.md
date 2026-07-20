@@ -1,10 +1,15 @@
+---
+title: Redis, Valkey & Memcached Health Checks
+description: 'Redis health check patterns for Node.js: PING checkers, read-after-write round trips, timeouts for hanging clients and latency-based degraded status.'
+---
+
 # Key-Value Stores
 
 Redis, Valkey, Memcached, DynamoDB, Cloudflare KV — the health check pattern is the same for all of them: perform the cheapest possible operation and let the promise settle. If it resolves, the service is healthy; if it rejects, Medicus marks it unhealthy and forwards the error to the [error logger](../logger.md).
 
 ## Basic checker
 
-Clients with a dedicated ping command (Redis, Valkey, Memcached) make this a one-liner:
+Clients with a dedicated ping command make the Redis health check — and its Valkey and Memcached equivalents — a one-liner:
 
 ```ts
 medicus.addChecker({
@@ -18,12 +23,12 @@ With the [Fastify integration](../integrations/fastify.md), the checker context 
 
 ## Stores without a ping command
 
-Managed and HTTP-based stores (Cloudflare KV, DynamoDB, Upstash REST) usually have no `PING`. A cheap read works just as well — it proves connectivity, authentication and authorization, even when the key doesn't exist:
+Managed and HTTP-based stores (Cloudflare KV, DynamoDB, Upstash REST) usually have no `PING`. A cheap read works just as well: it proves connectivity, authentication and authorization, even when the key doesn't exist:
 
 ```ts
 medicus.addChecker({
   async kv(ctx) {
-    // A missing key resolves to null — that still proves
+    // A missing key resolves to null, which still proves
     // the store is reachable and credentials are valid
     await ctx.kv.get('healthcheck');
   }
@@ -32,7 +37,7 @@ medicus.addChecker({
 
 ## Read-after-write round trips
 
-A ping proves the server answers — not that your process can *write*. Stores can be reachable yet reject writes (out of memory, read-only replica, exceeded quota). When writes matter, do a small round trip on a dedicated key:
+A ping proves the server answers, not that your process can *write*. Stores can be reachable yet reject writes (out of memory, read-only replica, exceeded quota). When writes matter, do a small round trip on a dedicated key:
 
 ```ts
 medicus.addChecker({
@@ -53,7 +58,7 @@ Prefer the plain ping/read unless you have a reason: round trips cost more, and 
 
 ## Hanging commands and timeouts
 
-Depending on client configuration, a command sent while the connection is down may **hang waiting for a reconnect** instead of rejecting — for example, ioredis with `maxRetriesPerRequest: null`, which is required by BullMQ.
+Depending on client configuration, a command sent while the connection is down may **hang waiting for a reconnect** instead of rejecting. One example is ioredis with `maxRetriesPerRequest: null`, which is required by BullMQ.
 
 Medicus' [checker timeout](../checkers.md#timeout-protection) is the safety net: after `checkerTimeoutMs` (5 seconds by default) the check is marked unhealthy instead of blocking the whole health report.
 
