@@ -44,6 +44,8 @@ const server = createServer((req, res) => {
 ```ts
 interface HttpHealthCheckOptions {
   debug?: boolean; // Include debug info by default
-  headers?: Record<string, string>; // Custom headers (includes cache prevention by default)
+  headers?: Record<string, string>; // Add or override response headers
 }
 ```
+
+Responses default to `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-cache, no-store, must-revalidate`.

@@ -1,6 +1,23 @@
 import type { Medicus } from '../medicus';
 import { type HealthCheckResult, HealthStatus } from '../types';
 
+/** Default headers sent by every HTTP health check integration. */
+export const DefaultHealthCheckHeaders = {
+  'cache-control': 'no-cache, no-store, must-revalidate',
+  'content-type': 'application/json; charset=utf-8'
+} as const;
+
+/** Creates health check response headers with optional user overrides. */
+export function createHealthCheckHeaders(headers?: Record<string, string>): Record<string, string> {
+  const merged = new Headers(DefaultHealthCheckHeaders);
+
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    merged.set(name, value);
+  }
+
+  return Object.fromEntries(merged);
+}
+
 /**
  * Converts a health status to an HTTP status code
  */

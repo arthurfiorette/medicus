@@ -7,7 +7,9 @@ import { fastifyMedicusPlugin } from '../../src/integrations/fastify';
 describe('medicusPlugin()', () => {
   it('registers a health check route', async () => {
     await using app = fastify();
-    await app.register(fastifyMedicusPlugin);
+    await app.register(fastifyMedicusPlugin, {
+      headers: { 'x-health': 'medicus' }
+    });
 
     assert.ok(app.medicus instanceof Medicus);
 
@@ -20,6 +22,9 @@ describe('medicusPlugin()', () => {
       status: HealthStatus.HEALTHY,
       services: {}
     });
+    assert.equal(response.headers['cache-control'], 'no-cache, no-store, must-revalidate');
+    assert.equal(response.headers['content-type'], 'application/json; charset=utf-8');
+    assert.equal(response.headers['x-health'], 'medicus');
   });
 
   it('uses cached version when ?last=true', async () => {
@@ -53,6 +58,26 @@ describe('medicusPlugin()', () => {
 
     assert.deepStrictEqual(response2.json(), {
       // cached
+      status: HealthStatus.HEALTHY,
+      services: {}
+    });
+  });
+
+  it('supports case-insensitive header overrides', async () => {
+    await using app = fastify();
+    await app.register(fastifyMedicusPlugin, {
+      headers: {
+        'Cache-Control': 'public, max-age=30',
+        'Content-Type': 'application/health+json'
+      }
+    });
+
+    const response = await app.inject('/health');
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['cache-control'], 'public, max-age=30');
+    assert.equal(response.headers['content-type'], 'application/health+json; charset=utf-8');
+    assert.deepEqual(response.json(), {
       status: HealthStatus.HEALTHY,
       services: {}
     });

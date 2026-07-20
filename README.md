@@ -35,7 +35,7 @@
 
 <br />
 
-Medicus is a comprehensive, agnostic health check library for Node.js. It provides an easy way to monitor the health of various services and integrates seamlessly with Fastify.
+Medicus is a comprehensive, framework-agnostic health check library for Node.js. It provides ready-made integrations for Fastify, Express, Elysia, Hono, H3, Nitro and plain HTTP servers.
 
 <br />
 
