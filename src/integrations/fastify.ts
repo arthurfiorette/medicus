@@ -3,8 +3,13 @@ import fp from 'fastify-plugin';
 import type { Logger } from 'pino';
 import { Medicus } from '../medicus';
 import { HealthCheckQueryParamsSchema, HealthCheckResultSchema } from '../schemas';
-import { type HealthCheckResult, HealthStatus, type MedicusOption } from '../types';
-import { HttpStatuses, parseHealthStatus, performHttpCheck } from '../utils/http';
+import { HealthStatus, type MedicusOption } from '../types';
+import {
+  createHealthCheckHeaders,
+  HttpStatuses,
+  parseHealthStatus,
+  performHttpCheck
+} from '../utils/http';
 import { pinoMedicusPlugin } from './pino';
 
 declare module 'fastify' {
@@ -34,6 +39,13 @@ export type FastifyMedicsPluginOptions = Omit<
    * @default false
    */
   debug?: DebugDetector;
+
+  /**
+   * Custom response headers to include in health check responses
+   *
+   * @default DefaultHealthCheckHeaders
+   */
+  headers?: Record<string, string>;
 };
 
 /**
@@ -52,7 +64,8 @@ export type FastifyMedicsPluginOptions = Omit<
  * ```
  */
 export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
-  async (fastify, { route, debug = false, ...medicusOptions }) => {
+  async (fastify, { route, debug = false, headers, ...medicusOptions }) => {
+    const responseHeaders = createHealthCheckHeaders(headers);
     // Adds fastify error logger
     medicusOptions.plugins ??= [];
     medicusOptions.plugins.push(pinoMedicusPlugin(fastify.log as Logger));
@@ -101,7 +114,7 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
           // https://github.com/fastify/otel#usage
           otel: false
         },
-        async handler(request, reply): Promise<HealthCheckResult> {
+        async handler(request, reply) {
           const isDebug = typeof debug === 'boolean' ? debug : await debug(request);
 
           //@ts-expect-error - untyped from querystring
@@ -117,8 +130,7 @@ export const fastifyMedicusPlugin = fp<FastifyMedicsPluginOptions>(
             simulate
           );
 
-          reply.status(status);
-          return result;
+          return reply.headers(responseHeaders).status(status).send(JSON.stringify(result));
         }
       });
     }
