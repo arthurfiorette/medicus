@@ -3,6 +3,20 @@ import test, { describe, it } from 'node:test';
 import { setImmediate, setTimeout } from 'node:timers/promises';
 import { definePlugin, HealthStatus, Medicus } from '../src';
 
+async function waitForBackgroundRun(run: Promise<void>): Promise<void> {
+  const controller = new AbortController();
+  try {
+    await Promise.race([
+      run,
+      setTimeout(500, undefined, { signal: controller.signal }).then(() => {
+        assert.fail('Timed out waiting for the next background run');
+      })
+    ]);
+  } finally {
+    controller.abort();
+  }
+}
+
 describe('Medicus', () => {
   it('returns healthy when no checkers are added', async () => {
     using medicus = new Medicus({});
@@ -212,6 +226,148 @@ describe('Medicus', () => {
     await setImmediate();
 
     assert.ok(backgroundCheckCalled);
+  });
+
+  test('serializes slow eager background checks with scheduled runs', {
+    timeout: 1000
+  }, async () => {
+    let releaseCheck!: () => void;
+    const pendingCheck = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    let nextCheckStarted!: () => void;
+    const nextCheck = new Promise<void>((resolve) => {
+      nextCheckStarted = resolve;
+    });
+    let checks = 0;
+    let completedChecks = 0;
+
+    using medicus = new Medicus({
+      checkers: {
+        async slowChecker() {
+          if (++checks === 2) {
+            nextCheckStarted();
+          }
+          await pendingCheck;
+          return HealthStatus.HEALTHY;
+        }
+      },
+      onBackgroundCheck() {
+        completedChecks++;
+      }
+    });
+
+    medicus.startBackgroundCheck(10);
+    assert.equal(checks, 1);
+    await setTimeout(30);
+    assert.equal(checks, 1);
+    assert.equal(completedChecks, 0);
+
+    releaseCheck();
+    await waitForBackgroundRun(nextCheck);
+    medicus.stopBackgroundCheck();
+    await setImmediate();
+    assert.equal(checks, 2);
+    assert.equal(completedChecks, 2);
+  });
+
+  test('waits for a slow background listener before starting another check', {
+    timeout: 1000
+  }, async () => {
+    let releaseListener!: () => void;
+    const pendingListener = new Promise<void>((resolve) => {
+      releaseListener = resolve;
+    });
+    let nextListenerStarted!: () => void;
+    const nextListener = new Promise<void>((resolve) => {
+      nextListenerStarted = resolve;
+    });
+    let checks = 0;
+    let listeners = 0;
+
+    using medicus = new Medicus({
+      checkers: {
+        success() {
+          checks++;
+        }
+      },
+      async onBackgroundCheck() {
+        if (++listeners === 2) {
+          nextListenerStarted();
+        }
+        await pendingListener;
+      }
+    });
+
+    medicus.startBackgroundCheck(10);
+    await setTimeout(30);
+    assert.equal(checks, 1);
+    assert.equal(listeners, 1);
+
+    releaseListener();
+    await waitForBackgroundRun(nextListener);
+    medicus.stopBackgroundCheck();
+    assert.equal(checks, 2);
+    assert.equal(listeners, 2);
+  });
+
+  test('does not restart a stopped background timer after an in-flight check', async () => {
+    let releaseCheck!: () => void;
+    const pendingCheck = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    let checks = 0;
+
+    using medicus = new Medicus({
+      checkers: {
+        async slowChecker() {
+          checks++;
+          await pendingCheck;
+        }
+      }
+    });
+
+    medicus.startBackgroundCheck(10);
+    medicus.stopBackgroundCheck();
+    releaseCheck();
+    await setTimeout(30);
+    assert.equal(checks, 1);
+  });
+
+  test('keeps background checks serialized across a stop and restart', {
+    timeout: 1000
+  }, async () => {
+    let releaseCheck!: () => void;
+    const pendingCheck = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    let nextCheckStarted!: () => void;
+    const nextCheck = new Promise<void>((resolve) => {
+      nextCheckStarted = resolve;
+    });
+    let checks = 0;
+
+    using medicus = new Medicus({
+      checkers: {
+        async slowChecker() {
+          if (++checks === 2) {
+            nextCheckStarted();
+          }
+          await pendingCheck;
+        }
+      }
+    });
+
+    medicus.startBackgroundCheck(10);
+    medicus.stopBackgroundCheck();
+    medicus.startBackgroundCheck(10);
+    await setTimeout(30);
+    assert.equal(checks, 1);
+
+    releaseCheck();
+    await waitForBackgroundRun(nextCheck);
+    medicus.stopBackgroundCheck();
+    assert.equal(checks, 2);
   });
 
   test('removeChecker returns false when an non existing checker name is provided', async () => {

@@ -53,6 +53,9 @@ export class Medicus<Ctx = void> {
   /** The interval id of the background check if it's running */
   protected backgroundCheckTimer: NodeJS.Timeout | undefined;
 
+  /** Whether a background check or its listener is still running */
+  protected backgroundCheckRunning = false;
+
   /**
    * A map of all the checkers that will be executed when the health check is run with the
    * key being the name of the checker
@@ -306,21 +309,31 @@ export class Medicus<Ctx = void> {
     this: void,
     self: Medicus<Ctx>
   ): Promise<void> {
-    const result = await self.performCheck(true);
-
-    // Calls the onBackgroundCheck callback if it's set
-    if (self.onBackgroundCheck) {
-      try {
-        await self.onBackgroundCheck(result);
-      } catch (error) {
-        // nothing we can do if there isn't a logger
-        self.errorLogger?.(error, 'onBackgroundCheck');
-      }
+    if (self.backgroundCheckRunning) {
+      return;
     }
 
-    // Runs the background check again with the same interval
-    // unless it was manually removed
-    self.backgroundCheckTimer?.refresh();
+    self.backgroundCheckRunning = true;
+
+    try {
+      const result = await self.performCheck(true);
+
+      // Calls the onBackgroundCheck callback if it's set
+      if (self.onBackgroundCheck) {
+        try {
+          await self.onBackgroundCheck(result);
+        } catch (error) {
+          // nothing we can do if there isn't a logger
+          self.errorLogger?.(error, 'onBackgroundCheck');
+        }
+      }
+    } finally {
+      self.backgroundCheckRunning = false;
+
+      // Runs the background check again with the same interval
+      // unless it was manually removed
+      self.backgroundCheckTimer?.refresh();
+    }
   }
 
   /** Starts the background check if it's not already running */
