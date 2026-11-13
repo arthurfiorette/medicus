@@ -3,6 +3,20 @@ import test, { describe, it } from 'node:test';
 import { setImmediate, setTimeout } from 'node:timers/promises';
 import { definePlugin, HealthStatus, Medicus } from '../src';
 
+async function waitForBackgroundRun(run: Promise<void>): Promise<void> {
+  const controller = new AbortController();
+  try {
+    await Promise.race([
+      run,
+      setTimeout(500, undefined, { signal: controller.signal }).then(() => {
+        assert.fail('Timed out waiting for the next background run');
+      })
+    ]);
+  } finally {
+    controller.abort();
+  }
+}
+
 describe('Medicus', () => {
   it('returns healthy when no checkers are added', async () => {
     using medicus = new Medicus({});
@@ -250,7 +264,7 @@ describe('Medicus', () => {
     assert.equal(completedChecks, 0);
 
     releaseCheck();
-    await nextCheck;
+    await waitForBackgroundRun(nextCheck);
     medicus.stopBackgroundCheck();
     await setImmediate();
     assert.equal(checks, 2);
@@ -291,7 +305,7 @@ describe('Medicus', () => {
     assert.equal(listeners, 1);
 
     releaseListener();
-    await nextListener;
+    await waitForBackgroundRun(nextListener);
     medicus.stopBackgroundCheck();
     assert.equal(checks, 2);
     assert.equal(listeners, 2);
@@ -351,7 +365,7 @@ describe('Medicus', () => {
     assert.equal(checks, 1);
 
     releaseCheck();
-    await nextCheck;
+    await waitForBackgroundRun(nextCheck);
     medicus.stopBackgroundCheck();
     assert.equal(checks, 2);
   });
