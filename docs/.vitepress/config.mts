@@ -233,6 +233,18 @@ export default defineConfig({
             link: 'fastify.md'
           },
           {
+            text: 'Express',
+            link: 'express.md'
+          },
+          {
+            text: 'Elysia',
+            link: 'elysia.md'
+          },
+          {
+            text: 'H3 / Nitro',
+            link: 'h3.md'
+          },
+          {
             text: 'Hono',
             link: 'hono.md'
           },

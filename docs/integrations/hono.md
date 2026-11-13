@@ -93,6 +93,8 @@ Because of that lifecycle, background checks are not suitable and should remain 
 - `?last` - Return cached result
 - `?simulate=unhealthy|degraded|healthy` - Simulate status
 
+Responses default to `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-cache, no-store, must-revalidate`.
+
 ## Options
 
 ```ts

@@ -20,6 +20,7 @@ describe('Hono Integration', () => {
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-cache, no-store, must-revalidate');
+    assert.equal(response.headers.get('content-type'), 'application/json; charset=utf-8');
 
     const body: any = await response.json();
     assert.equal(body.status, HealthStatus.HEALTHY);

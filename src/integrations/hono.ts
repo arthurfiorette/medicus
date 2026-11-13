@@ -1,7 +1,7 @@
 import type { Context, Env, Handler, Input } from 'hono';
 import { Medicus } from '../medicus';
 import type { MedicusOption } from '../types';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import { createHealthCheckHeaders, parseHealthStatus, performHttpCheck } from '../utils/http';
 
 export interface HonoHealthCheckOptions {
   /**
@@ -14,7 +14,7 @@ export interface HonoHealthCheckOptions {
   /**
    * Custom response headers to include in health check responses
    *
-   * @default { 'cache-control': 'no-cache, no-store, must-revalidate' }
+   * @default DefaultHealthCheckHeaders
    */
   headers?: Record<string, string>;
 }
@@ -104,10 +104,7 @@ export function createHonoHealthCheckHandler<
   ...medicusOptions
 }: HonoMedicusOptions<E, P, I> = {}): HonoHealthCheckHandler<E, P, I> {
   const defaultDebug = !!debug;
-  const defaultHeaders = {
-    'cache-control': 'no-cache, no-store, must-revalidate',
-    ...headers
-  };
+  const defaultHeaders = createHealthCheckHeaders(headers);
   const medicus = new Medicus<Context<MedicusVariables<E, P, I>, P, I>>(medicusOptions);
 
   return async function honoHealthCheckHandler(c) {
@@ -119,10 +116,12 @@ export function createHonoHealthCheckHandler<
 
     const check = await performHttpCheck(medicus, debug, last, simulate, c);
 
+    const response = c.json(check.result, check.status as 200 | 503);
+
     for (const [key, value] of Object.entries(defaultHeaders)) {
-      c.header(key, value);
+      response.headers.set(key, value);
     }
 
-    return c.json(check.result, check.status as 200 | 503);
+    return response;
   };
 }
