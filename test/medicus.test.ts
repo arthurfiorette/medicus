@@ -205,7 +205,73 @@ describe('Medicus', () => {
       }
     });
 
+    // the eager check would have finished by now
+    await setTimeout(20);
+
     assert.ok(!backgroundCheckCalled);
+  });
+
+  test('eager background check respects checkerTimeoutMs from the constructor', {
+    timeout: 1000
+  }, async () => {
+    using medicus = new Medicus({
+      checkers: {
+        async slowChecker() {
+          await setTimeout(200);
+        }
+      },
+      backgroundCheckInterval: 1000,
+      checkerTimeoutMs: 10
+    });
+
+    await setTimeout(50);
+
+    assert.deepStrictEqual(medicus.getLastCheck(true), {
+      status: HealthStatus.UNHEALTHY,
+      services: {
+        slowChecker: {
+          status: HealthStatus.UNHEALTHY,
+          debug: {
+            timeout: true,
+            error: 'Health check timed out'
+          }
+        }
+      }
+    });
+  });
+
+  test('keeps scheduling background checks when the listener never settles', {
+    timeout: 1000
+  }, async () => {
+    const loggedErrors: { error: unknown; checkerName: string }[] = [];
+    const signals: AbortSignal[] = [];
+    let checks = 0;
+
+    using medicus = new Medicus({
+      checkers: {
+        success() {
+          checks++;
+        }
+      },
+      checkerTimeoutMs: 10,
+      errorLogger(error, checkerName) {
+        loggedErrors.push({ error, checkerName });
+      },
+      onBackgroundCheck(_, signal) {
+        signals.push(signal);
+        return new Promise(() => {});
+      }
+    });
+
+    medicus.startBackgroundCheck(10);
+    await setTimeout(100);
+    medicus.stopBackgroundCheck();
+
+    assert.ok(checks >= 2, `expected at least 2 checks, got ${checks}`);
+    assert.ok(loggedErrors.length >= 1);
+    assert.equal(loggedErrors[0]!.checkerName, 'onBackgroundCheck');
+    assert.equal((loggedErrors[0]!.error as Error).name, 'TimeoutError');
+    assert.ok(signals[0]!.aborted);
   });
 
   test('backgroundCheck does runs before first timeout when eagerBackgroundCheck', async () => {

@@ -32,10 +32,16 @@ export interface DetailedHealthCheck {
 /**
  * A listener function that will be called whenever a background check is performed
  * and a new result is available
+ *
+ * @param result - The result of the background check
+ * @param signal - An AbortSignal that will be aborted when the listener exceeds `checkerTimeoutMs`.
+ *                 The next background check is scheduled once it aborts, even if the listener
+ *                 has not settled.
  */
 export type BackgroundCheckListener = (
   this: void,
-  result: HealthCheckResult
+  result: HealthCheckResult,
+  signal: AbortSignal
 ) => void | Promise<void>;
 
 export interface HealthCheckResult {
@@ -175,6 +181,8 @@ export interface BaseMedicusOption<Ctx = void> {
    *
    * A `TimeoutUnhealthyCheck` will be used for the result of the checker if it times out.
    *
+   * The same limit applies to `onBackgroundCheck`.
+   *
    * @default 5000
    */
   checkerTimeoutMs?: number;
@@ -185,6 +193,9 @@ export interface BaseMedicusOption<Ctx = void> {
    * Some non-exposed systems, instead of providing as a API to be called by third-party
    * systems, they must manually push the result into another API in form of a cron-job or
    * heartbeat mechanism.
+   *
+   * If it does not settle within `checkerTimeoutMs`, a timeout error is sent to `errorLogger`
+   * and the next background check is scheduled anyway.
    */
   onBackgroundCheck?: BackgroundCheckListener;
 }
