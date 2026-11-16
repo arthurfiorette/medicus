@@ -5,11 +5,11 @@ description: 'Redis health check patterns for Node.js: PING checkers, read-after
 
 # Key-Value Stores
 
-Redis, Valkey, Memcached, DynamoDB, Cloudflare KV — the health check pattern is the same for all of them: perform the cheapest possible operation and let the promise settle. If it resolves, the service is healthy; if it rejects, Medicus marks it unhealthy and forwards the error to the [error logger](../logger.md).
+Redis, Valkey, Memcached, DynamoDB and Cloudflare KV use the same health check pattern: perform the cheapest possible operation and let the promise settle. If it resolves, the service is healthy; if it rejects, Medicus marks it unhealthy and forwards the error to the [error logger](../logger.md).
 
 ## Basic checker
 
-Clients with a dedicated ping command make the Redis health check — and its Valkey and Memcached equivalents — a one-liner:
+Clients with a dedicated ping command make the Redis health check, including its Valkey and Memcached equivalents, a one-liner:
 
 ```ts
 medicus.addChecker({

@@ -1,6 +1,6 @@
 ---
 title: Scheduled Background Health Checks
-description: Run Node.js health checks on an interval instead of per request — background scheduling, cached results, eager startup checks and check event listeners.
+description: Run Node.js health checks on an interval instead of per request, with background scheduling, cached results, eager startup checks and check event listeners.
 ---
 
 # Background Checks

@@ -1,6 +1,23 @@
 import type { Medicus } from '../medicus';
 import { type HealthCheckResult, HealthStatus } from '../types';
 
+/** Default headers sent by every HTTP health check integration. */
+export const DefaultHealthCheckHeaders = {
+  'cache-control': 'no-cache, no-store, must-revalidate',
+  'content-type': 'application/json; charset=utf-8'
+} as const;
+
+/** Creates health check response headers with optional user overrides. */
+export function createHealthCheckHeaders(headers?: Record<string, string>): Record<string, string> {
+  const merged = new Headers(DefaultHealthCheckHeaders);
+
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    merged.set(name, value);
+  }
+
+  return Object.fromEntries(merged);
+}
+
 /**
  * Converts a health status to an HTTP status code
  */
@@ -52,6 +69,16 @@ export async function performHttpCheck<Ctx>(
     result,
     status: healthStatusToHttpStatus(result.status)
   };
+}
+
+/**
+ * Parses a boolean query flag such as `?last` or `?debug`.
+ *
+ * A bare flag or any value other than `false` and `0` is true, so `?last=false`
+ * behaves the same as in the Fastify integration.
+ */
+export function parseQueryFlag(value: unknown): boolean {
+  return typeof value === 'string' && value !== 'false' && value !== '0';
 }
 
 /**

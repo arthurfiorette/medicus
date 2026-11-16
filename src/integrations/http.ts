@@ -1,6 +1,11 @@
 import type { ServerResponse } from 'node:http';
 import type { Medicus } from '../medicus';
-import { parseHealthStatus, performHttpCheck } from '../utils/http';
+import {
+  createHealthCheckHeaders,
+  parseHealthStatus,
+  parseQueryFlag,
+  performHttpCheck
+} from '../utils/http';
 
 export interface HttpHealthCheckOptions {
   /**
@@ -13,7 +18,7 @@ export interface HttpHealthCheckOptions {
   /**
    * Custom response headers to include in health check responses
    *
-   * @default { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache, no-store, must-revalidate' }
+   * @default DefaultHealthCheckHeaders
    */
   headers?: Record<string, string>;
 }
@@ -83,15 +88,11 @@ export function createHttpHealthCheckHandler<Ctx = void>(
   options: HttpHealthCheckOptions = {}
 ): HttpHealthCheckHandler {
   const defaultDebug = !!options.debug || false;
-  const defaultHeaders = {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-cache, no-store, must-revalidate',
-    ...options.headers
-  };
+  const defaultHeaders = createHealthCheckHeaders(options.headers);
 
   return async function httpHealthCheckHandler(searchParams, res) {
-    const last = !!searchParams.get('last');
-    const debug = !!searchParams.get('debug') || defaultDebug;
+    const last = parseQueryFlag(searchParams.get('last'));
+    const debug = parseQueryFlag(searchParams.get('debug')) || defaultDebug;
     const simulate = parseHealthStatus(searchParams.get('simulate'));
 
     const check = await performHttpCheck(medicus, debug, last, simulate);

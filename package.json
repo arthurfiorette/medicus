@@ -1,7 +1,7 @@
 {
   "name": "medicus",
-  "version": "1.5.0",
-  "description": "Flexible, framework-agnostic health check library for Node.js and TypeScript. Liveness and readiness checks with Fastify, Hono, Avvio and plain HTTP integrations.",
+  "version": "1.6.0",
+  "description": "Flexible, framework-agnostic health check library for Node.js and TypeScript. Liveness and readiness checks with popular server integrations.",
   "keywords": [
     "health check",
     "healthcheck",
@@ -17,7 +17,12 @@
     "heartbeat",
     "fastify",
     "fastify-plugin",
+    "elysia",
+    "express",
+    "h3",
+    "nitro",
     "hono",
+    "nextjs",
     "tanstack-start",
     "avvio",
     "pino",
@@ -56,9 +61,21 @@
       "types": "./dist/integrations/avvio.d.ts",
       "default": "./dist/integrations/avvio.js"
     },
+    "./elysia": {
+      "types": "./dist/integrations/elysia.d.ts",
+      "default": "./dist/integrations/elysia.js"
+    },
+    "./express": {
+      "types": "./dist/integrations/express.d.ts",
+      "default": "./dist/integrations/express.js"
+    },
     "./fastify": {
       "types": "./dist/integrations/fastify.d.ts",
       "default": "./dist/integrations/fastify.js"
+    },
+    "./h3": {
+      "types": "./dist/integrations/h3.d.ts",
+      "default": "./dist/integrations/h3.js"
     },
     "./hono": {
       "types": "./dist/integrations/hono.d.ts",
@@ -67,6 +84,10 @@
     "./http": {
       "types": "./dist/integrations/http.d.ts",
       "default": "./dist/integrations/http.js"
+    },
+    "./nextjs": {
+      "types": "./dist/integrations/nextjs.d.ts",
+      "default": "./dist/integrations/nextjs.js"
     },
     "./node": {
       "types": "./dist/integrations/node.d.ts",
@@ -109,9 +130,13 @@
     "@nolebase/vitepress-plugin-og-image": "^2.21.1",
     "@shikijs/vitepress-twoslash": "^4.6.0",
     "@tanstack/react-start": "^1.169.5",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "c8": "^12.0.0",
     "close-with-grace": "^2.5.0",
+    "elysia": "^1.4.32",
+    "express": "^5.2.1",
+    "h3": "^2.0.8",
     "hono": "^4.13.18",
     "husky": "^9.1.7",
     "tsx": "^4.23.15",
@@ -121,8 +146,11 @@
   },
   "peerDependencies": {
     "avvio": "^9.3.0",
+    "elysia": "^1.4.29",
+    "express": "^4.21.0 || ^5.0.0",
     "fastify": "^5.10.0",
     "fastify-plugin": "^6.0.0 || ^5.1.0",
+    "h3": "^1.15.0 || ^2.0.0",
     "hono": "^4.12.31",
     "pino": "^10.3.1"
   },
@@ -130,10 +158,19 @@
     "avvio": {
       "optional": true
     },
+    "elysia": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
     "fastify": {
       "optional": true
     },
     "fastify-plugin": {
+      "optional": true
+    },
+    "h3": {
       "optional": true
     },
     "hono": {

@@ -23,7 +23,7 @@ export const getHealth = createServerFn({ method: 'GET' }).handler(
 );
 ```
 
-The integration has no dependency on `@tanstack/react-start` or `@tanstack/solid-start` — the handler is structurally compatible with `createServerFn().handler()` in both.
+The integration has no dependency on `@tanstack/react-start` or `@tanstack/solid-start`; the handler is structurally compatible with `createServerFn().handler()` in both.
 
 ## Input Flags
 
