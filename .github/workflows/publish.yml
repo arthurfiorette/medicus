@@ -4,14 +4,22 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Stable release tag to publish
+        required: true
+        type: string
 
 permissions:
-  id-token: write # Required for OIDC
   contents: read
 
 jobs:
   publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     environment:
       name: NPM Registry
@@ -19,32 +27,25 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref }}
           fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup node and restore cached dependencies
-        uses: actions/setup-node@v6
+        uses: pnpm/setup@v3
         with:
-          node-version-file: .nvmrc
-          registry-url: https://registry.npmjs.org
-          cache: pnpm
+          runtime: node@24
+          cache: true
+          install: true
 
-      - name: Install packages
-        run: pnpm install --frozen-lockfile
+      - name: Verify stable release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: >-
+          node --input-type=module -e "import packageJson from './package.json' with { type: 'json' };
+          process.exit(process.env.RELEASE_TAG === 'v' + packageJson.version &&
+          !packageJson.version.includes('-') ? 0 : 1)"
 
-      - name: Build
-        run: pnpm run build
-
-      - name: Generate
-        run: pnpm run generate
-
-      - name: Update NPM
-        run: npm i -g npm@latest
-
-      - name: Publish to NPM # OIDC authentication
-        run: pnpm publish --access public --no-git-checks --provenance
+      - name: Publish to NPM
+        run: npx --yes npm@latest publish --access public

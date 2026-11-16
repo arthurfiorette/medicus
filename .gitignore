@@ -5,8 +5,3 @@ docs/.vitepress/cache
 docs/.vitepress/temp
 
 *.tsbuildinfo
-
-# generated files
-/.npmignore
-/*.js
-/*.d.ts

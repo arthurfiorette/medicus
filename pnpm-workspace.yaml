@@ -1,10 +1,25 @@
 allowBuilds:
   esbuild: true
 
-autoInstallPeers: true
-enablePrePostScripts: true
-packageManagerStrict: false
-shellEmulator: true
+# Docs twoslash needs the TypeScript 6 JS API, which TypeScript 7 no longer ships.
+# These packages get their own TypeScript 6 instead of resolving the root TypeScript 7.
+packageExtensions:
+  "@shikijs/twoslash":
+    dependencies:
+      typescript: ^6.0.3
+  "@typescript/vfs":
+    dependencies:
+      typescript: ^6.0.3
+  twoslash:
+    dependencies:
+      typescript: ^6.0.3
+  twoslash-vue:
+    dependencies:
+      typescript: ^6.0.3
 
 overrides:
-  '@shikijs/types': ^4.3.1
+  "@shikijs/types": ^4.3.1
+  "@shikijs/twoslash>typescript:peer": "-"
+  "@typescript/vfs>typescript:peer": "-"
+  twoslash>typescript:peer: "-"
+  twoslash-vue>typescript:peer: "-"

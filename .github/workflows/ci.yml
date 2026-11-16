@@ -22,33 +22,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup node and restore cached dependencies
-        uses: actions/setup-node@v6
+        uses: pnpm/setup@v3
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
-
-      - name: Install packages
-        run: pnpm install --frozen-lockfile
+          cache: true
+          install: true
 
       - name: Lint
-        run: pnpm lint:ci
+        run: pnpm lint-ci
+
+      - name: Build code
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm test-types
 
       - name: Test
         run: pnpm test
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Build code
-        run: pnpm build
 
       # Building docs ensures documentation is fixed on each code change
       - name: Build docs
@@ -58,7 +55,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5
         with:
-          path: './docs/.vitepress/dist'
+          path: ./docs/.vitepress/dist
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'
