@@ -4,8 +4,3 @@ coverage
 docs/.vitepress/cache
 
 *.tsbuildinfo
-
-# generated files
-/.npmignore
-/*.js
-/*.d.ts
