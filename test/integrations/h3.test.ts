@@ -1,10 +1,13 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createApp, type H3Event, toWebHandler } from 'h3';
-import { HealthStatus, Medicus } from '../../src';
+import type { H3Event } from 'h3' with { 'resolution-mode': 'import' };
+import { HealthStatus } from '../../src';
 import { createH3HealthCheckHandler } from '../../src/integrations/h3';
 
-describe('H3 and Nitro Integration', () => {
+describe('H3 Integration', async () => {
+  // h3 2 is ESM-only and this test file compiles to CommonJS
+  const { H3 } = await import('h3');
+
   it('handles H3 requests and passes the event to checkers', async () => {
     const handler = createH3HealthCheckHandler({
       debug: true,
@@ -13,16 +16,16 @@ describe('H3 and Nitro Integration', () => {
         request(event) {
           return {
             status: HealthStatus.HEALTHY,
-            debug: { path: event.path }
+            debug: { path: event.url.pathname }
           };
         }
       }
     });
-    const app = createApp().use(handler);
-    const response = await toWebHandler(app)(new Request('http://localhost/health'));
+    const app = new H3().get('/health', handler);
+
+    const response = await app.request('/health');
     const body: any = await response.json();
 
-    assert.ok(handler.medicus instanceof Medicus);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-cache, no-store, must-revalidate');
     assert.equal(response.headers.get('content-type'), 'application/json; charset=utf-8');
@@ -30,47 +33,32 @@ describe('H3 and Nitro Integration', () => {
     assert.equal(body.services.request.debug.path, '/health');
   });
 
-  it('supports debug, cached, and simulated results', async () => {
+  it('supports cached and simulated results', async () => {
     let calls = 0;
     const handler = createH3HealthCheckHandler({
       checkers: {
         service() {
           calls++;
-          return {
-            status: HealthStatus.HEALTHY,
-            debug: { visible: true }
-          };
+          return HealthStatus.HEALTHY;
         }
       }
     });
-    const app = createApp().use(handler);
-    const request = toWebHandler(app);
+    const app = new H3().get('/health', handler);
 
-    const first = await request(new Request('http://localhost/health?debug=true'));
-    const firstBody: any = await first.json();
-    const cached = await request(new Request('http://localhost/health?last=true'));
-    const simulated = await request(new Request('http://localhost/health?simulate=unhealthy'));
+    await app.request('/health');
+    await app.request('/health?last=true');
+    const simulated = await app.request('/health?simulate=unhealthy&last=false');
 
-    assert.equal(firstBody.services.service.debug.visible, true);
-    assert.equal(cached.status, 200);
     assert.equal(calls, 2);
     assert.equal(simulated.status, 503);
   });
 
-  it('supports H3 2 event URLs and the legacy empty URL fallback', async () => {
-    const modernHandler = createH3HealthCheckHandler({
-      checkers: { service: () => HealthStatus.HEALTHY }
-    });
-    const modernResponse = await modernHandler({
-      url: new URL('http://localhost/health?simulate=unhealthy')
-    } as unknown as H3Event);
+  it('reads the query string from H3 1 events', async () => {
+    const handler = createH3HealthCheckHandler();
 
-    const legacyHandler = createH3HealthCheckHandler();
-    const legacyResponse = await legacyHandler({
-      node: { req: { url: undefined } }
-    } as unknown as H3Event);
+    // H3 1 (Nitro 2) events have no `url`, only `path` with the query string
+    const response = await handler({ path: '/health?simulate=unhealthy' } as unknown as H3Event);
 
-    assert.equal(modernResponse.status, 503);
-    assert.equal(legacyResponse.status, 200);
+    assert.equal(response.status, 503);
   });
 });

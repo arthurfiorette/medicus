@@ -1,23 +1,31 @@
 import assert from 'node:assert';
 import { describe, it } from 'node:test';
-import { createHealthCheckHeaders, DefaultHealthCheckHeaders } from '../../src/utils/http';
+import { createHealthCheckHeaders, parseQueryFlag } from '../../src/utils/http';
 
 describe('HTTP utilities', () => {
-  it('creates fresh default health check headers', () => {
-    const headers = createHealthCheckHeaders();
+  it('overrides default headers case-insensitively', () => {
+    const headers = createHealthCheckHeaders({ 'Cache-Control': 'public, max-age=30' });
 
-    assert.deepEqual(headers, DefaultHealthCheckHeaders);
-    assert.notStrictEqual(headers, DefaultHealthCheckHeaders);
+    assert.deepEqual(headers, {
+      'cache-control': 'public, max-age=30',
+      'content-type': 'application/json; charset=utf-8'
+    });
   });
 
-  it('overrides headers case-insensitively', () => {
-    const headers = createHealthCheckHeaders({
-      'Cache-Control': 'public, max-age=30',
-      'Content-Type': 'application/health+json'
-    });
+  it('parses query flags', () => {
+    const cases: [unknown, boolean][] = [
+      ['', true],
+      ['true', true],
+      ['1', true],
+      ['false', false],
+      ['0', false],
+      [null, false],
+      [undefined, false],
+      [['true', 'false'], false]
+    ];
 
-    assert.equal(headers['cache-control'], 'public, max-age=30');
-    assert.equal(headers['content-type'], 'application/health+json');
-    assert.equal(Object.keys(headers).length, 2);
+    for (const [value, expected] of cases) {
+      assert.equal(parseQueryFlag(value), expected, `parseQueryFlag(${JSON.stringify(value)})`);
+    }
   });
 });

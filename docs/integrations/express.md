@@ -1,11 +1,11 @@
 ---
-title: Express Health Check Handler
-description: Add a typed health check route to Express 4.21+ or 5.2+ with request context, HTTP status mapping, debug output and cached checks.
+title: Express Health Check Route
+description: Add a health check endpoint to Express 4 or 5 with a route handler that passes the request to your checkers.
 ---
 
 # Express <Badge type="warning" text="Third-Party" />
 
-Attach `createExpressHealthCheckHandler` to a GET route. Checkers receive the current Express `Request` as their context:
+Attach `createExpressHealthCheckHandler` to a route. Checkers receive the Express `Request` as their context:
 
 ```ts
 import express from 'express';
@@ -13,6 +13,7 @@ import { HealthStatus } from 'medicus';
 import { createExpressHealthCheckHandler } from 'medicus/express';
 
 const app = express();
+
 app.get(
   '/health',
   createExpressHealthCheckHandler({
@@ -26,15 +27,21 @@ app.get(
 );
 ```
 
-The handler exposes its `Medicus` instance for late checker registration and shutdown:
+Errors thrown outside checkers, such as by a custom `unhealthyLogger`, are passed to `next()` so your error middleware handles them on Express 4 and 5.
+
+## Shutdown
+
+Express has no shutdown hook. If you enable `backgroundCheckInterval`, stop it through `handler.medicus` when you close the server:
 
 ```ts
 import express from 'express';
 import { createExpressHealthCheckHandler } from 'medicus/express';
 
 const app = express();
-const health = createExpressHealthCheckHandler();
+const health = createExpressHealthCheckHandler({ backgroundCheckInterval: 30_000 });
+
 app.get('/health', health);
+
 const server = app.listen(3000);
 
 process.on('SIGTERM', () => {
@@ -43,21 +50,23 @@ process.on('SIGTERM', () => {
 });
 ```
 
-Express does not own an application shutdown lifecycle, so stop background checks in the same shutdown handler that closes your HTTP server and other resources.
-
 ## Query Parameters
 
-- `?debug=true` - Include checker details.
-- `?last=true` - Return the last cached result, or run a check if none exists.
-- `?simulate=healthy|degraded|unhealthy` - Override the returned status for testing.
+- `?debug` - Include debug information
+- `?last` - Return cached result
+- `?simulate=unhealthy|degraded|healthy` - Simulate status
 
-Healthy and degraded results return `200`; unhealthy results return `503`. Responses default to `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-cache, no-store, must-revalidate`.
+Healthy and degraded results return `200`, unhealthy results return `503`. Responses default to `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-cache, no-store, must-revalidate`.
 
 ## Options
 
-`createExpressHealthCheckHandler` accepts all `Medicus` constructor options except `context`, plus:
+`createExpressHealthCheckHandler` accepts every `Medicus` option except `context`, plus:
 
-- `debug?: boolean` - Include checker details by default.
-- `headers?: Record<string, string>` - Add or override response headers.
+```ts
+interface ExpressHealthCheckOptions {
+  debug?: boolean; // Include debug info by default
+  headers?: Record<string, string>; // Add or override response headers
+}
+```
 
-See the [Express middleware guide](https://expressjs.com/en/guide/using-middleware.html) and [health check and graceful shutdown guide](https://expressjs.com/en/advanced/healthcheck-graceful-shutdown.html).
+For more details about Express, visit the [Express documentation](https://expressjs.com/).

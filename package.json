@@ -23,6 +23,7 @@
     "h3",
     "nitro",
     "hono",
+    "nextjs",
     "tanstack-start",
     "avvio",
     "pino",
@@ -81,9 +82,9 @@
     "@types/node": "^26.1.1",
     "c8": "^12.0.0",
     "close-with-grace": "^2.5.0",
-    "elysia": "1.4.29",
-    "express": "5.2.1",
-    "h3": "1.15.11",
+    "elysia": "^1.4.32",
+    "express": "^5.2.1",
+    "h3": "^2.0.8",
     "hono": "^4.12.31",
     "husky": "^9.1.7",
     "tsx": "^4.23.1",
@@ -92,20 +93,16 @@
     "vitepress-plugin-llms": "^1.13.3"
   },
   "peerDependencies": {
-    "@types/express": "^5.0.0 || ^4.17.0",
     "avvio": "^9.3.0",
     "elysia": "^1.4.29",
-    "express": "^5.2.1 || ^4.21.0",
+    "express": "^4.21.0 || ^5.0.0",
     "fastify": "^5.10.0",
     "fastify-plugin": "^6.0.0 || ^5.1.0",
-    "h3": "^1.15.11 || >=2.0.0-0 <3",
+    "h3": "^1.15.0 || ^2.0.0",
     "hono": "^4.12.31",
     "pino": "^10.3.1"
   },
   "peerDependenciesMeta": {
-    "@types/express": {
-      "optional": true
-    },
     "avvio": {
       "optional": true
     },

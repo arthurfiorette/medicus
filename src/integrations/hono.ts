@@ -1,7 +1,12 @@
 import type { Context, Env, Handler, Input } from 'hono';
 import { Medicus } from '../medicus';
 import type { MedicusOption } from '../types';
-import { createHealthCheckHeaders, parseHealthStatus, performHttpCheck } from '../utils/http';
+import {
+  createHealthCheckHeaders,
+  parseHealthStatus,
+  parseQueryFlag,
+  performHttpCheck
+} from '../utils/http';
 
 export interface HonoHealthCheckOptions {
   /**
@@ -108,8 +113,8 @@ export function createHonoHealthCheckHandler<
   const medicus = new Medicus<Context<MedicusVariables<E, P, I>, P, I>>(medicusOptions);
 
   return async function honoHealthCheckHandler(c) {
-    const last = !!c.req.query('last');
-    const debug = !!c.req.query('debug') || defaultDebug;
+    const last = parseQueryFlag(c.req.query('last'));
+    const debug = parseQueryFlag(c.req.query('debug')) || defaultDebug;
     const simulate = parseHealthStatus(c.req.query('simulate'));
 
     c.set('medicus', medicus);

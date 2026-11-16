@@ -3,7 +3,7 @@ layout: home
 
 title: Medicus, the Node.js Health Check Library
 titleTemplate: false
-description: Framework-agnostic health check library for Node.js and TypeScript. Ready-made endpoints for Fastify, Express, Elysia, Hono, H3, Nitro and plain HTTP.
+description: Framework-agnostic health check library for Node.js and TypeScript. Ready-made endpoints for Fastify, Express, Elysia, Hono, H3, Nitro, Next.js and plain HTTP.
 
 hero:
   name: 'Medicus'

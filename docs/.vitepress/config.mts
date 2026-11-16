@@ -249,6 +249,10 @@ export default defineConfig({
             link: 'hono.md'
           },
           {
+            text: 'Next.js',
+            link: 'nextjs.md'
+          },
+          {
             text: 'TanStack Start',
             link: 'tanstack-start.md'
           },

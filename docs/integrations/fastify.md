@@ -40,9 +40,6 @@ import { fastifyMedicusPlugin } from 'medicus/fastify';
 const app = fastify();
 
 app.register(fastifyMedicusPlugin, {
-  headers: {
-    'x-health-check': 'medicus'
-  },
   route: {
     url: '/-/health',
     logLevel: 'silent'
@@ -51,9 +48,5 @@ app.register(fastifyMedicusPlugin, {
 ```
 
 Setting `route: false` disables the route entirely while keeping checkers and [background checks](../background-checks.md) running. This is useful for workers that use Fastify as a plugin container without ever calling `listen()`, as shown in the [background workers guide](../guides/background-workers.md).
-
-## Response Headers
-
-Responses default to `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-cache, no-store, must-revalidate`. Use the `headers` option to add or override response headers.
 
 For more details about Fastify, visit the [Fastify documentation](https://www.fastify.io/).

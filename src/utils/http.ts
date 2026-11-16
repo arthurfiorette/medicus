@@ -72,6 +72,16 @@ export async function performHttpCheck<Ctx>(
 }
 
 /**
+ * Parses a boolean query flag such as `?last` or `?debug`.
+ *
+ * A bare flag or any value other than `false` and `0` is true, so `?last=false`
+ * behaves the same as in the Fastify integration.
+ */
+export function parseQueryFlag(value: unknown): boolean {
+  return typeof value === 'string' && value !== 'false' && value !== '0';
+}
+
+/**
  * Parses a health status string into a HealthStatus enum value.
  */
 export function parseHealthStatus(value?: string | null): HealthStatus | undefined {

@@ -1,14 +1,23 @@
 import type { Request, RequestHandler } from 'express';
 import { Medicus } from '../medicus';
 import type { MedicusOption } from '../types';
-import { createHealthCheckHeaders, parseHealthStatus, performHttpCheck } from '../utils/http';
+import {
+  createHealthCheckHeaders,
+  parseHealthStatus,
+  parseQueryFlag,
+  performHttpCheck
+} from '../utils/http';
 
 export interface ExpressHealthCheckOptions {
-  /** Whether to include debug information in the response by default */
+  /**
+   * Whether to include debug information in the response by default
+   *
+   * @default false
+   */
   debug?: boolean;
 
   /**
-   * Custom response headers
+   * Custom response headers to include in health check responses
    *
    * @default DefaultHealthCheckHeaders
    */
@@ -19,12 +28,14 @@ export type ExpressMedicusOptions = Omit<MedicusOption<Request>, 'context'> &
   ExpressHealthCheckOptions;
 
 export interface ExpressHealthCheckHandler extends RequestHandler {
-  /** The underlying Medicus instance, useful for registration and shutdown */
+  /** The underlying Medicus instance, useful to register checkers later or to stop background checks */
   medicus: Medicus<Request>;
 }
 
 /**
  * Creates an Express route handler for a health check endpoint.
+ *
+ * Checkers receive the current Express `Request` as their context.
  *
  * @example
  * ```ts
@@ -48,16 +59,16 @@ export function createExpressHealthCheckHandler({
     next
   ) {
     try {
-      const last = !!req.query.last;
-      const isDebug = !!req.query.debug || defaultDebug;
+      const last = parseQueryFlag(req.query.last);
+      const isDebug = parseQueryFlag(req.query.debug) || defaultDebug;
       const simulate = parseHealthStatus(
         typeof req.query.simulate === 'string' ? req.query.simulate : undefined
       );
-      const check = await performHttpCheck(medicus, isDebug, last, simulate, req);
 
+      const check = await performHttpCheck(medicus, isDebug, last, simulate, req);
       res.set(defaultHeaders).status(check.status).json(check.result);
     } catch (error) {
-      // Express 4 does not automatically forward rejected handler promises.
+      // Express 4 does not forward rejected handler promises
       next(error);
     }
   };
