@@ -1,9 +1,21 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "$schema": "https://biomejs.dev/schemas/latest/schema.json",
   "extends": ["@arthurfiorette/biomejs-config"],
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedPackageJson": "on"
+      }
+    }
+  },
   "html": {
     "parser": {
       "interpolation": true
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": false
     }
   },
   "linter": {
