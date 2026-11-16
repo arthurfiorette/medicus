@@ -25,5 +25,16 @@
         "noTsIgnore": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [".serena/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
+    }
+  ]
 }
