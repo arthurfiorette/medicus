@@ -135,16 +135,17 @@ export class Medicus<Ctx = void> {
       this.addChecker(options.checkers);
     }
 
-    if (options.backgroundCheckInterval) {
-      this.startBackgroundCheck(options.backgroundCheckInterval);
-    }
-
     if (options.checkerTimeoutMs) {
       this.checkerTimeoutMs = options.checkerTimeoutMs;
     }
 
-    if (options.eagerBackgroundCheck) {
+    if (options.eagerBackgroundCheck !== undefined) {
       this.eagerBackgroundCheck = options.eagerBackgroundCheck;
+    }
+
+    // must run after the options above, since the eager check reads them synchronously
+    if (options.backgroundCheckInterval) {
+      this.startBackgroundCheck(options.backgroundCheckInterval);
     }
 
     // post hook once everything is set up
@@ -320,8 +321,16 @@ export class Medicus<Ctx = void> {
 
       // Calls the onBackgroundCheck callback if it's set
       if (self.onBackgroundCheck) {
+        // A listener that never settles would otherwise block the timer from being refreshed
+        const signal = AbortSignal.timeout(self.checkerTimeoutMs);
+
         try {
-          await self.onBackgroundCheck(result);
+          await Promise.race([
+            self.onBackgroundCheck(result, signal),
+            once(signal, 'abort').then(() => {
+              throw signal.reason;
+            })
+          ]);
         } catch (error) {
           // nothing we can do if there isn't a logger
           self.errorLogger?.(error, 'onBackgroundCheck');

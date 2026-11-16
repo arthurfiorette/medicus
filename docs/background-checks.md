@@ -67,6 +67,23 @@ The above example will log the check object every time a background check is per
 
 If an error is thrown inside the event listener, it will be captured and sent to the [`errorLogger`](./logger.md#error-logger), if one has been configured.
 
+The next background check only starts after the listener settles. To keep a hung listener from stopping background checks, it is bound by the same `checkerTimeoutMs` as [checkers](./checkers.md#timeout-protection). Once it expires, a timeout error is sent to the `errorLogger` and the next check is scheduled. The listener receives an `AbortSignal` as its second argument, which you can use to cancel pending work:
+
+```ts
+import { Medicus } from 'medicus';
+
+const medicus = new Medicus({
+  backgroundCheckInterval: 60_000,
+  async onBackgroundCheck(check, signal) {
+    await fetch('https://monitor.example.com/heartbeat', {
+      method: 'POST',
+      body: JSON.stringify(check),
+      signal
+    });
+  }
+});
+```
+
 ## `setTimeout` vs `setInterval`
 
 <!-- Yes, I copied the text from https://github.com/fastify/under-pressure/tree/c069a3b58d835326e73de3c6f582803bd7d2402e#settimeout-vs-setinterval  -->
