@@ -211,7 +211,7 @@ importers:
         version: 2.6.7
       '@fastify/under-pressure':
         specifier: ^9.2.1
-        version: 9.2.1
+        version: 9.2.2
       '@nolebase/vitepress-plugin-og-image':
         specifier: ^2.21.1
         version: 2.21.1(vitepress@1.6.4(@algolia/client-search@5.64.0)(@types/node@26.6.6)(lightningcss@1.33.0)(postcss@8.5.33)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(search-insights@2.17.3)(typescript@7.0.2))
@@ -827,8 +827,8 @@ packages:
   '@fastify/proxy-addr@5.1.2':
     resolution: {integrity: sha512-uqB4QsgVoro0XDC+DIftIMGXHdBPn+lK6Ek3xXAIxPMCJfqxnbtyEoMCm2KPUVOuIosd7Cyw9HawEqMFM/UA+g==}
 
-  '@fastify/under-pressure@9.2.1':
-    resolution: {integrity: sha512-eScrraL3PXJwWAfnpYVVDkctvl/RiQCnRahmsBS+ZhcQ6fy54beMc9Kom4NhlU4aYNgsl3J3ps4KBTndzHUkLQ==}
+  '@fastify/under-pressure@9.2.2':
+    resolution: {integrity: sha512-89/mvl3fWehCzJMs0o5hYl0kKovH222nSaW/w3T5Uutd/996zLvE75LT46sGSJRCucqhQKecgLc6Qwb88R4u2A==}
 
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
@@ -3709,7 +3709,7 @@ snapshots:
       '@fastify/forwarded': 3.1.2
       ipaddr.js: 2.5.0
 
-  '@fastify/under-pressure@9.2.1':
+  '@fastify/under-pressure@9.2.2':
     dependencies:
       '@fastify/error': 4.2.1
       fastify-plugin: 6.0.1
